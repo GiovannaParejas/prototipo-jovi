@@ -5,19 +5,16 @@ let facingMode = 'environment';
 let modoAtual = null;
 
 async function reconhecerComGemini(imagemBase64, modo = 'copiar') {
-  const response = await fetch('/api/gemini', {
+  const response = await fetch('https://prototipo-jovi.vercel.app/api/gemini', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ imageBase64: imagemBase64, modo })
   });
 
   const data = await response.json();
-
   if (data.erro) throw new Error(data.erro);
-
   return data.texto;
 }
-
 async function iniciarCamera() {
   const video = document.getElementById('camera-feed');
   try {
