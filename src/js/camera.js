@@ -433,15 +433,16 @@ img.style.cssText = `
           font-weight: 600;
           cursor: pointer;
         `;
-        btnSalvar.onclick = () => {
+btnSalvar.onclick = () => {
   const fotos = JSON.parse(localStorage.getItem('fotos_extras') || '[]');
   fotos.push({
     src: imagemCapturada,
     titulo: `Digitalização ${new Date().toLocaleDateString('pt-BR')}`,
     nota: null,
-    tipo: 'estudo'
+    tipo: 'pessoal'
   });
   localStorage.setItem('fotos_extras', JSON.stringify(fotos));
+  console.log('Fotos salvas:', localStorage.getItem('fotos_extras'));
   mostrarAviso("Imagem salva na galeria!");
   setTimeout(() => window.location.href = "./galeria.html", 1500);
 };
