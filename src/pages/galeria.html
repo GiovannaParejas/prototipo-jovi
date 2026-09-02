@@ -58,14 +58,27 @@
           </div>
 
           <!-- Modo Estudo: pastas -->
-<div id="view-estudo" class="oculto">
-  <div class="estudo-header">
-    <button class="btn-nova-pasta" onclick="criarPasta()">
-      <span class="material-icons">add</span>
-    </button>
-  </div>
-  <div id="lista-pastas"></div>
-</div>
+          <div id="view-estudo" class="oculto">
+            <div class="estudo-header">
+              <button
+                class="btn-nova-pasta"
+                onclick="criarPasta()"
+                style="
+                  background: transparent;
+                  border: none;
+                  padding: 4px;
+                  cursor: pointer;
+                "
+              >
+                <span
+                  class="material-icons"
+                  style="font-size: 24px; color: #ffffff; padding-bottom: 8px"
+                  >add</span
+                >
+              </button>
+            </div>
+            <div id="lista-pastas"></div>
+          </div>
           <!-- Modo Pessoal: grid 2 colunas -->
           <div id="view-pessoal">
             <div class="fotos-grid-pessoal" id="grid-pessoal"></div>
