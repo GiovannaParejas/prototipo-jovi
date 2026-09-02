@@ -1,0 +1,465 @@
+:root {
+    --background-pagina: #E8E8E8;
+    --cor-branco: #FFFFFF;
+    --cor-preta: #000000;
+    --cor-amarelo: #FFF700;
+    --background-cor-cinza: #1A1A1A;
+    --cor-cinza-escuro: #111;
+    --cor-cinza-camera: #111;
+    --cor-texto-muted: #666;
+    --cor-zoom: #AAA;
+    --cor-overlay: rgba(0, 0, 0, 0.55);
+    --cor-overlay-leve: rgba(0, 0, 0, 0.45);
+    --cor-overlay-escuro: rgba(0, 0, 0, 0.6);
+    --cor-overlay-botao: rgba(255, 255, 255, 0.1);
+    --cor-overlay-botao-hover: rgba(255, 255, 255, 0.2);
+    --cor-aviso: #C8FF00;
+    --cor-aviso-texto: #000;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background: var(--background-pagina);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100dvh;
+}
+
+.celular {
+    width: 100%;
+    height: 100dvh;
+    background: var(--background-celular);
+    border-radius: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.barra-superior {
+    padding: 12px 20px;
+    font-size: 12px;
+    color: var(--cor-branco);
+    background: black;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+}
+
+.barra-superior .material-icons {
+    font-size: 16px;
+    color: var(--cor-branco);
+}
+
+.camera-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: var(--cor-cinza-camera);
+}
+
+#camera-feed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.camera-fallback {
+    width: 100%;
+    height: 100%;
+    background: var(--background-cor-cinza);
+    display: none;
+}
+
+.camera-topo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), transparent);
+    z-index: 5;
+}
+
+.cam-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--cor-branco);
+    display: flex;
+    align-items: center;
+}
+
+.cam-btn .material-icons {
+    font-size: 20px;
+}
+
+.cam-marca {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--cor-amarelo);
+    letter-spacing: 2px;
+}
+
+.modos-acao {
+    position: absolute;
+    top: 52px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    background: var(--cor-overlay);
+    border-radius: 20px;
+    padding: 6px 10px;
+    z-index: 5;
+}
+
+.modo-acao {
+    background: transparent;
+    border: none;
+    color: var(--cor-branco);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 12px;
+    transition: 0.2s;
+}
+
+.modo-acao.ativo {
+    color: var(--cor-amarelo) !important;
+    font-weight: 600;
+}
+
+.modo-acao:hover {
+    color: var(--cor-branco);
+}
+
+.zoom-bar {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--cor-overlay-leve);
+    border-radius: 20px;
+    padding: 5px 10px;
+    z-index: 5;
+}
+
+.zoom-btn {
+    background: transparent;
+    border: none;
+    color: var(--cor-zoom);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 12px;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.zoom-btn.ativo {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--cor-branco);
+}
+
+.zoom-btn .material-icons {
+    font-size: 16px;
+}
+
+.modos-camera {
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 10px 4px;
+    background: var(--cor-preta);
+    flex-shrink: 0;
+}
+
+.modo {
+    background: transparent;
+    border: none;
+    color: var(--cor-texto-muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 4px 6px;
+    transition: 0.2s;
+}
+
+.modo.ativo {
+    color: var(--cor-amarelo);
+    font-weight: 600;
+}
+
+.controles {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 32px;
+    background: var(--cor-preta);
+    flex-shrink: 0;
+}
+
+.resultado-foto {
+    position: absolute;
+    bottom: 50px;
+    left: 12px;
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    border: 2px solid var(--cor-amarelo);
+    overflow: hidden;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: 0.3s;
+    z-index: 6;
+    display: none;
+}
+
+.resultado-foto.visivel {
+    opacity: 1;
+    transform: scale(1);
+    display: block;
+}
+
+.resultado-foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.btn-galeria,
+.btn-flip {
+    background: var(--cor-overlay-botao);
+    border: none;
+    cursor: pointer;
+    color: var(--cor-branco);
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.btn-galeria:hover,
+.btn-flip:hover {
+    background: var(--cor-overlay-botao-hover);
+}
+
+.btn-galeria .material-icons,
+.btn-flip .material-icons {
+    font-size: 22px;
+}
+
+#galeria-foto {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    display: none;
+}
+
+#galeria-icone {
+    display: block;
+}
+
+#btn-fechar-selecao {
+    position: absolute;
+    top: 90px;
+    right: 12px;
+    background: var(--cor-overlay-escuro);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--cor-branco);
+    z-index: 9;
+}
+
+#btn-fechar-selecao .material-icons {
+    font-size: 18px;
+}
+
+.btn-captura {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 3px solid var(--cor-amarelo);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.btn-captura:hover .captura-inner {
+    background: var(--cor-preta);
+}
+
+.captura-inner {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--cor-branco);
+    transition: 0.2s;
+}
+
+.barra-inferior {
+    padding: 10px 80px;
+    background: var(--cor-preta);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.barra-inferior button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--cor-texto-muted);
+    font-family: 'Material Icons';
+    font-size: 20px;
+}
+
+#msg-reconhecimento {
+    position: absolute;
+    top: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--cor-overlay-escuro);
+    color: var(--cor-branco);
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    white-space: nowrap;
+    z-index: 6;
+}
+
+#resultado-traducao {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fit;
+    z-index: 4;
+}
+
+#resultado-copia {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 4;
+}
+
+#botoes-copia {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 7;
+    width: 80%;
+}
+
+#botoes-copia button {
+    background: var(--cor-overlay-escuro);
+    color: var(--cor-branco);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    padding: 10px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s;
+    text-align: center;
+}
+
+#botoes-copia button:hover {
+    background: var(--cor-overlay-botao-hover);
+}
+
+#canvas-selecao {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 5;
+    cursor: crosshair;
+}
+
+#aviso-copia {
+    position: absolute;
+    bottom: 130px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--cor-aviso);
+    color: var(--cor-aviso-texto);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 20px;
+    border-radius: 20px;
+    white-space: nowrap;
+    z-index: 8;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@media (min-width: 768px) {
+    body {
+        background: var(--background-pagina);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .celular {
+        width: 390px;
+        height: 640px;
+        border-radius: 40px;
+        overflow: hidden;
+    }
+}

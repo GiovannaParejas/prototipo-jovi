@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/galeria.css" />
+    <link rel="icon" href="../assets/favicon.ico" />
+    <title>Galeria — Jovi</title>
+  </head>
+
+  <body>
+    <div class="celular">
+      <header class="barra-superior">
+        <span>9:30</span>
+        <div>
+          <span class="material-icons">signal_cellular_alt</span>
+          <span class="material-icons">wifi</span>
+          <span class="material-icons">battery_full</span>
+        </div>
+      </header>
+
+      <div class="tela" id="tela-galeria">
+        <div class="app-header">
+          <button class="btn-voltar" onclick="history.back()">
+            <span class="material-icons">arrow_back</span>
+          </button>
+          <span class="header-titulo">Galeria</span>
+          <div style="width: 32px"></div>
+        </div>
+
+        <main class="notas-lista-galeria" id="conteudo-galeria">
+          <!-- Tab bar -->
+          <div class="tab-bar">
+            <button
+              class="tab ativo"
+              id="tab-pessoal"
+              onclick="trocarTab('pessoal', this)"
+            >
+              Pessoal
+            </button>
+            <button
+              class="tab"
+              id="tab-estudo"
+              onclick="trocarTab('estudo', this)"
+            >
+              Estudo
+            </button>
+          </div>
+
+          <!-- Modo Estudo: pastas -->
+<div id="view-estudo" class="oculto">
+  <div class="pasta" onclick="abrirPasta('Software e Total Experience')">
+    <div class="pasta-preview">
+      <img src="../assets/digitalizacao.png" alt="">
+    </div>
+    <div class="pasta-info">
+      <span class="material-icons">folder</span>
+      <span>Software e Total Experience</span>
+    </div>
+  </div>
+  <div class="pasta" onclick="abrirPasta('Inglês')">
+    <div class="pasta-preview">
+      <img src="../assets/holiday.png" alt="">
+      <img src="../assets/traducao.png" alt="">
+    </div>
+    <div class="pasta-info">
+      <span class="material-icons">folder</span>
+      <span>Inglês</span>
+    </div>
+  </div>
+</div>
+          <!-- Modo Pessoal: grid 2 colunas -->
+          <div id="view-pessoal">
+            <div class="fotos-grid-pessoal">
+              <div class="foto-item" onclick="abrirFoto(3)">
+                <img src="../assets/sapo-zoo.jpeg" alt="" />
+              </div>
+              <div class="foto-item" onclick="abrirFoto(4)">
+                <img src="../assets/elefante-zoo.jpeg" alt="" />
+              </div>
+              <div class="foto-item" onclick="abrirFoto(5)">
+                <img src="../assets/jacare-zoo.jpeg" alt="" />
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <div class="tela oculto" id="tela-foto">
+        <div class="foto-header">
+          <button class="btn-voltar" onclick="fecharFoto()">
+            <span class="material-icons">arrow_back</span>
+          </button>
+          <span class="header-titulo" id="foto-titulo"></span>
+          <div style="width: 32px"></div>
+        </div>
+
+        <div class="foto-visualizacao">
+          <img id="foto-ampliada" src="" alt="Foto ampliada" />
+        </div>
+
+        <div class="foto-acoes">
+          <button class="acao-btn" id="btn-esquerda">
+            <span class="material-icons">share</span>
+            <span>Compartilhar</span>
+          </button>
+          <button class="acao-btn" onclick="abrirPDF()">
+            <span class="material-icons">picture_as_pdf</span>
+            <span>PDF</span>
+          </button>
+          <button class="acao-btn" onclick="abrirAnotacoes()">
+            <span class="material-icons">bookmark</span>
+            <span>Anotações</span>
+          </button>
+          <button class="acao-btn" onclick="abrirResumo()">
+            <span class="material-icons">summarize</span>
+            <span>Resumo</span>
+          </button>
+          <button class="acao-btn">
+            <span class="material-icons">edit</span>
+            <span>Editar</span>
+          </button>
+        </div>
+
+        <div class="menu-anotacoes oculto" id="menu-anotacoes">
+          <button class="menu-opcao" onclick="abrirNota()">
+            <span class="material-icons">note_alt</span>
+            <span>Abrir no Bloco de Notas</span>
+          </button>
+          <button class="menu-opcao" onclick="abrirGrifar()">
+            <span class="material-icons">edit</span>
+            <span>Grifar</span>
+          </button>
+          <button class="menu-opcao cancelar" onclick="fecharMenuAnotacoes()">
+            <span class="material-icons">close</span>
+            <span>Cancelar</span>
+          </button>
+        </div>
+
+        <div class="menu-anotacoes oculto" id="menu-pdf">
+          <button class="menu-opcao" onclick="abrirVisualizadorPDF('texto')">
+            <span class="material-icons">article</span>
+            <span>Texto em PDF</span>
+          </button>
+          <button class="menu-opcao" onclick="abrirVisualizadorPDF('foto')">
+            <span class="material-icons">image</span>
+            <span>Foto em PDF</span>
+          </button>
+          <button class="menu-opcao cancelar" onclick="fecharPDF()">
+            <span class="material-icons">close</span>
+            <span>Cancelar</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="tela oculto" id="tela-pdf">
+        <div class="foto-header">
+          <button class="btn-voltar" onclick="fecharVisualizadorPDF()">
+            <span class="material-icons">arrow_back</span>
+          </button>
+          <span class="header-titulo" id="pdf-titulo">Documento PDF</span>
+          <button class="btn-voltar" onclick="alert('Download simulado!')">
+            <span class="material-icons">download</span>
+          </button>
+        </div>
+
+
+
+
+        <div class="pdf-visualizacao">
+          <div class="pdf-pagina"><img src="" alt="PDF" id="pdf-p1" /></div>
+        </div>
+
+        <div class="pdf-barra">
+          <span class="pdf-paginas">1 página</span>
+        </div>
+      </div>
+
+           <div class="tela oculto" id="tela-pasta">
+        <div class="foto-header">
+          <button class="btn-voltar" onclick="fecharPasta()">
+            <span class="material-icons">arrow_back</span>
+          </button>
+          <span class="header-titulo" id="pasta-titulo"></span>
+          <div style="width:32px"></div>
+        </div>
+        <div class="fotos-grid-pessoal" id="pasta-fotos" ></div>
+      </div>
+
+      <footer class="barra-inferior">
+        <button class="material-icons" onclick="voltarOuHistorico()">
+          arrow_back
+        </button>
+        <button
+          class="material-icons"
+          onclick="window.location.href = './../../index.html'"
+        >
+          radio_button_unchecked
+        </button>
+        <button class="material-icons" onclick="alert('Abrir apps recentes')">
+          menu
+        </button>
+      </footer>
+
+      <div class="overlay-grifar oculto" id="overlay-grifar">
+        <div class="grifar-acoes">
+          <button class="grifar-btn cancelar" onclick="fecharGrifar()">
+            <span class="material-icons">close</span>
+            <span>Cancelar</span>
+          </button>
+          <button class="grifar-btn confirmar" onclick="confirmarGrifar()">
+            <span class="material-icons">check</span>
+            <span>Confirmar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../js/galeria.js"></script>
+  </body>
+</html>

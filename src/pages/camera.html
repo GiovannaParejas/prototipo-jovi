@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/camera.css" />
+    <link rel="icon" href="../assets/favicon.ico" />
+
+    <title>Câmera — Jovi</title>
+  </head>
+
+  <body>
+    <div class="celular">
+      <header class="barra-superior">
+        <span>9:30</span>
+        <div>
+          <span class="material-icons">signal_cellular_alt</span>
+          <span class="material-icons">wifi</span>
+          <span class="material-icons">battery_full</span>
+        </div>
+      </header>
+
+      <div class="camera-wrapper">
+        <video id="camera-feed" autoplay loop muted playsinline>
+          <source src="../assets/loopmesa.mp4" id="video-src" />
+        </video>
+
+        <div class="resultado-foto" id="resultado-foto">
+          <img src="../assets/caderno.jpeg" alt="Digitalização" />
+        </div>
+
+        <div class="camera-fallback" id="camera-fallback"></div>
+
+        <div class="camera-topo">
+          <button class="cam-btn">
+            <span class="material-icons">motion_photos_on</span>
+          </button>
+          <button class="cam-btn">
+            <span class="material-icons">flash_off</span>
+          </button>
+          <button class="cam-btn">
+            <span class="material-icons">panorama_fish_eye</span>
+          </button>
+          <span class="cam-marca">JOVI</span>
+          <button class="cam-btn">
+            <span class="material-icons">filter_vintage</span>
+          </button>
+          <button class="cam-btn">
+            <span class="material-icons">settings</span>
+          </button>
+        </div>
+
+        <div class="modos-acao" id="modos-acao">
+          <button
+            class="modo-acao"
+            onclick="selecionarAcao('digitalizar', this)"
+          >
+            Digitalizar
+          </button>
+          <button class="modo-acao" onclick="selecionarAcao('copiar', this)">
+            Copiar
+          </button>
+          <button class="modo-acao" onclick="selecionarAcao('traduzir', this)">
+            Traduzir
+          </button>
+        </div>
+
+        <div class="zoom-bar">
+          <button class="zoom-btn">0,5</button>
+          <button class="zoom-btn ativo">1x</button>
+          <button class="zoom-btn">2</button>
+        </div>
+      </div>
+
+      <div class="modos-camera">
+        <button class="modo">Retrato</button>
+        <button class="modo">Foto</button>
+        <button class="modo ativo">Estudo</button>
+        <button class="modo">Vídeo</button>
+        <button class="modo">Mais</button>
+      </div>
+
+      <div class="controles">
+        <button class="btn-galeria" id="btn-galeria" onclick="irParaFoto()">
+          <span class="material-icons" id="galeria-icone">image</span>
+          <img src="../assets/caderno.jpeg" id="galeria-foto" alt="Foto" />
+        </button>
+        <button class="btn-captura" id="btn-captura">
+          <div class="captura-inner"></div>
+        </button>
+        <button class="btn-flip">
+          <span class="material-icons">flip_camera_android</span>
+        </button>
+      </div>
+
+      <footer class="barra-inferior">
+        <button class="material-icons" onclick="history.back()">
+          arrow_back
+        </button>
+        <button
+          class="material-icons"
+          onclick="window.location.href = './../../index.html'"
+        >
+          radio_button_unchecked
+        </button>
+        <button class="material-icons" onclick="alert('Abrir apps recentes')">
+          menu
+        </button>
+      </footer>
+    </div>
+    <script src="../js/config.js"></script>
+    <script src="../js/camera.js"></script>
+  </body>
+</html>

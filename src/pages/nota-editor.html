@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="../css/nota-editor.css">
+    <link rel="icon" href="../assets/favicon.ico">
+    <title>Nota — Jovi</title>
+</head>
+
+<body>
+    <div class="celular">
+        <header class="barra-superior">
+            <span>9:30</span>
+            <div>
+                <span class="material-icons">signal_cellular_alt</span>
+                <span class="material-icons">wifi</span>
+                <span class="material-icons">battery_full</span>
+            </div>
+        </header>
+
+        <div class="app-header">
+            <button class="btn-voltar" onclick="history.back()">
+                <span class="material-icons">arrow_back</span>
+            </button>
+            <span class="header-titulo">Resumo — Fotossíntese</span>
+            <button class="btn-opcoes">
+                <span class="material-icons">more_vert</span>
+            </button>
+        </div>
+
+        <main class="editor-area">
+            <div class="nota-titulo-edit" contenteditable="true" data-placeholder="Título"></div>
+
+            <div class="nota-corpo" contenteditable="true" data-placeholder="Comece a escrever..."></div>
+        </main>
+
+        <footer class="barra-ferramentas">
+            <button class="ferramenta" id="btn-negrito" onclick="formatar('bold')">
+                <span class="ferramenta-icone negrito">B</span>
+                <span class="ferramenta-label">Negrito</span>
+            </button>
+            <button class="ferramenta" id="btn-sublinha" onclick="formatar('underline')">
+                <span class="ferramenta-icone sublinhado">A</span>
+                <span class="ferramenta-label">Sublinhar</span>
+            </button>
+            <button class="ferramenta" onclick="formatar('justifyCenter')">
+                <span class="material-icons ferramenta-icone">format_align_center</span>
+                <span class="ferramenta-label">Centralizar</span>
+            </button>
+            <button class="ferramenta" onclick="formatar('justifyLeft')">
+                <span class="material-icons ferramenta-icone">format_align_left</span>
+                <span class="ferramenta-label">Alinhar à esquerda</span>
+            </button>
+            <button class="ferramenta" onclick="formatar('justifyRight')">
+                <span class="material-icons ferramenta-icone">format_align_right</span>
+                <span class="ferramenta-label">Alinhar à direita</span>
+            </button>
+        </footer>
+
+        <div class="barra-inferior">
+            <button class="material-icons" onclick="history.back()">arrow_back</button>
+            <button class="material-icons"
+                onclick="window.location.href='./../../index.html'">radio_button_unchecked</button>
+            <button class="material-icons" onclick="alert('Abrir apps recentes')">menu</button>
+        </div>
+    </div>
+
+    <script src="../js/nota-editor.js"></script>
+</body>
+
+</html>

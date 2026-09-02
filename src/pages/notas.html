@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/notas.css" />
+    <link rel="icon" href="../assets/favicon.ico" />
+    <title>Notas — Jovi</title>
+  </head>
+
+  <body>
+    <div class="celular">
+      <header class="barra-superior">
+        <span>9:30</span>
+        <div>
+          <span class="material-icons">signal_cellular_alt</span>
+          <span class="material-icons">wifi</span>
+          <span class="material-icons">battery_full</span>
+        </div>
+      </header>
+
+      <div class="app-header">
+        <div class="app-header-top">
+          <h1 class="app-titulo">Notas</h1>
+          <button class="btn-nova-nota">
+            <span class="material-icons">add</span>
+          </button>
+        </div>
+        <div class="search-bar">
+          <span class="material-icons">search</span>
+          <span class="placeholder">Buscar notas...</span>
+        </div>
+      </div>
+
+      <div class="filtros">
+        <div class="filtro ativo">Todas</div>
+        <div class="filtro inativo">Estudo</div>
+        <div class="filtro inativo">Pessoal</div>
+        <div class="filtro inativo">Rascunho</div>
+      </div>
+
+      <div class="contador">4 notas</div>
+
+      <main class="notas-lista">
+        <a
+          href="nota-editor.html?titulo=Holiday at Sea&corpo=My wife and I had never considered a cruise holiday because we have four children under fourteen and we didn't think a ship could offer the kind of facilities that kids enjoy. But we found we were wrong when we took a 9-day trip on the Caribbean Princess, a ship which can carry over three thousand passengers.||We travelled last August, and so the ship was nearly full although more people go in July. We boarded the boat in Florida and our destinations were the Bahamas, Jamaica, the Cayman Islands and Mexico, which are all beautiful places to visit.||On board, my children had special clubs to go to so they always had plenty to do with people of their own age, while my wife and I could relax knowing professionals were keeping an eye on them. The on-board facilities were fantastic, including great shops, a jogging track, basketball courts and a range of excellent restaurants.||I wanted to find out what was involved in running such a big ship so I went through doors I wasn't really supposed to open!||I would definitely recommend a cruise holiday to anyone but make sure you search for the best possible price.||You'll want to keep in touch with people back home while you are away but remember that most mobile phones don't work at sea.||Unless you run into unusually bad weather, it is unlikely you'll be seasick."
+          class="nota-card azul"
+        >
+          <div class="nota-titulo">Holiday at Sea</div>
+          <div class="nota-preview">
+            My wife and I had never considered a cruise holiday because we have
+            four children under fourteen...
+          </div>
+          <div class="nota-meta">
+            <span class="nota-data">Hoje, 09:12</span>
+            <span class="nota-tag azul">Estudo</span>
+          </div>
+        </a>
+
+        <a
+          href="nota-editor.html?titulo=Férias no Mar (Tradução)&corpo=Minha esposa e eu nunca tínhamos considerado fazer um cruzeiro, porque temos quatro filhos com menos de quatorze anos e achávamos que um navio não poderia oferecer o tipo de instalações que as crianças gostam. Mas descobrimos que estávamos errados quando fizemos uma viagem de 9 dias no Caribbean Princess.||A bordo, meus filhos tinham clubes especiais para frequentar, então sempre tinham bastante coisa para fazer com pessoas da mesma idade, enquanto minha esposa e eu podíamos relaxar sabendo que profissionais estavam cuidando deles.||Eu queria descobrir o que estava envolvido em operar um navio tão grande, então passei por portas que não deveria abrir!||Eu recomendaria definitivamente um cruzeiro a qualquer pessoa, mas certifique-se de procurar o melhor preço possível.||Você vai querer manter contato com as pessoas em casa enquanto estiver viajando, mas lembre-se de que a maioria dos celulares não funciona no mar.||A menos que você enfrente um clima incomumente ruim, é pouco provável que você fique enjoado."
+          class="nota-card verde"
+        >
+          <div class="nota-titulo">Férias no Mar (Tradução)</div>
+          <div class="nota-preview">
+            Minha esposa e eu nunca tínhamos considerado fazer um cruzeiro,
+            porque temos quatro filhos com menos de quatorze anos e achávamos...
+          </div>
+          <div class="nota-meta">
+            <span class="nota-data">Ontem, 21:45</span>
+            <span class="nota-tag verde">Pessoal</span>
+          </div>
+        </a>
+
+        <a
+          href="nota-editor.html?titulo=Design Thinking - Process&corpo=Nano Course - Design como ferramenta de inovação.||O que é design centrado no usuário? É a utilização da investigação e pesquisa para descobrir e compreender os problemas das pessoas que utilizam o serviço, explorando e compreendendo seu comportamento, necessidades, desejos, sonhos e desejos.||O que é inovação? Processo criativo e transformador que promove a ruptura de paradigmas, o mesmo que qual, impactando positivamente na qualidade de vida e no desenvolvimento humano.||Tipos de inovação: Incremental - pequenas melhorias ou atualizações. Disruptiva - uma tecnologia que é transformada ou substituída por uma inovação de qualidade superior.||E como inovar? Ela precisa ser desejada pelas pessoas. Precisa ser rentável e factível do ponto de vista do negócio. Precisa ser tecnicamente possível."
+          class="nota-card amarelo"
+        >
+          <div class="nota-titulo">Design Thinking - Process (Texto)</div>
+          <div class="nota-preview">
+            Nano Course - Design como ferramenta de inovação...
+          </div>
+          <div class="nota-meta">
+            <span class="nota-data">03/05, 14:30</span>
+            <span class="nota-tag amarelo">Rascunho</span>
+          </div>
+        </a>
+
+        <a
+          onclick="abrirBhaskara()"
+          class="nota-card azul"
+          style="cursor: pointer"
+        >
+          <div class="nota-titulo">Fórmula de Bhaskara</div>
+          <div class="nota-preview">
+            x = (-b ± √Δ) / 2a — Equações do 2º grau
+          </div>
+          <div class="nota-meta">
+            <span class="nota-data">Hoje, 10:45</span>
+            <span class="nota-tag azul">Estudo</span>
+          </div>
+        </a>
+      </main>
+
+      <footer class="barra-inferior">
+        <button class="material-icons" onclick="history.back()">
+          arrow_back
+        </button>
+        <button
+          class="material-icons"
+          onclick="window.location.href = './../../index.html'"
+        >
+          radio_button_unchecked
+        </button>
+        <button class="material-icons" onclick="alert('Abrir apps recentes')">
+          menu
+        </button>
+      </footer>
+    </div>
+
+    <script>
+      function abrirBhaskara() {
+        sessionStorage.setItem("nota_titulo", "Fórmula de Bhaskara");
+        sessionStorage.setItem(
+          "nota_corpo",
+          "Equações do 2º grau — ax² + bx + c = 0" +
+            "||A fórmula de Bhaskara resolve qualquer equação do segundo grau, encontrando os valores de x a partir dos coeficientes a, b e c." +
+            "||Fórmula principal:" +
+            '||<span style="display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; font-size:14px; margin:4px 0;"><span style="border-bottom:1px solid currentColor; padding:0 4px;">-b ± √Δ</span><span style="padding:0 4px;">2a</span></span>' +
+            "||Onde o discriminante Δ (delta) é calculado por:" +
+            '||<span style="display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; font-size:14px; margin:4px 0;"><span style="padding:0 4px;">Δ = b² - 4ac</span></span>' +
+            "||Interpretação do Δ:" +
+            "||• Δ > 0 → duas raízes reais e distintas" +
+            "||• Δ = 0 → raiz dupla (duas iguais)" +
+            "||• Δ < 0 → nenhuma raiz real" +
+            "||Exemplo prático: x² - 5x + 6 = 0" +
+            "||a = 1, b = -5, c = 6" +
+            "||Δ = (-5)² - 4·1·6 = 25 - 24 = 1" +
+            '||<span style="display:inline-flex; flex-direction:column; align-items:center; vertical-align:middle; font-size:14px; margin:4px 0;"><span style="border-bottom:1px solid currentColor; padding:0 4px;">5 ± √1</span><span style="padding:0 4px;">2</span></span>' +
+            "||x₁ = 3   |   x₂ = 2",
+        );
+        window.location.href = "nota-editor.html";
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="../css/ia.css">
+    <link rel="icon" href="../assets/favicon.ico">
+    <title>IA — Jovi</title>
+</head>
+
+<body>
+    <div class="celular">
+        <header class="barra-superior">
+            <span>9:30</span>
+            <div>
+                <span class="material-icons">signal_cellular_alt</span>
+                <span class="material-icons">wifi</span>
+                <span class="material-icons">battery_full</span>
+            </div>
+        </header>
+
+        <div class="app-header">
+            <button class="btn-voltar" onclick="history.back()">
+                <span class="material-icons">arrow_back</span>
+            </button>
+            <span class="header-titulo" id="ia-titulo">JOVI Study Lens</span>
+            <button class="btn-opcoes">
+                <span class="material-icons">more_vert</span>
+            </button>
+        </div>
+
+<main class="ia-conteudo" id="ia-conteudo">
+</main>
+
+        <div class="ia-input-area">
+            <input class="ia-input" type="text" placeholder="Pergunte alguma coisa" id="ia-input">
+            <button class="ia-enviar">
+                <span class="material-icons">arrow_forward</span>
+            </button>
+        </div>
+
+        <footer class="barra-inferior">
+            <button class="material-icons" onclick="history.back()">arrow_back</button>
+            <button class="material-icons"
+                onclick="window.location.href='./../../index.html'">radio_button_unchecked</button>
+            <button class="material-icons" onclick="alert('Abrir apps recentes')">menu</button>
+        </footer>
+    </div>
+
+    <script src="../js/ia.js"></script>
+</body>
+
+</html>

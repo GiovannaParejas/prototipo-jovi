@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./src/css/style.css" />
+    <link rel="icon" href="./src/assets/favicon.ico" />
+    <title>Jovi Study Lens</title>
+  </head>
+
+  <body>
+    <div class="celular">
+      <header class="barra-superior">
+        <span>9:30</span>
+        <div>
+          <span class="material-icons">signal_cellular_alt</span>
+          <span class="material-icons">wifi</span>
+          <span class="material-icons">battery_full</span>
+        </div>
+      </header>
+
+      <main class="home">
+        <h1 class="home-titulo">Jovi Study Lens</h1>
+        <section class="apps">
+          <a href="./src/pages/camera.html" class="app">
+            <span class="material-icons">photo_camera</span>
+            <p>Câmera</p>
+          </a>
+          <a href="./src/pages/galeria.html" class="app">
+            <span class="material-icons">photo_library</span>
+            <p>Galeria</p>
+          </a>
+          <a href="./src/pages/notas.html" class="app">
+            <span class="material-icons">note_alt</span>
+            <p>Notas</p>
+          </a>
+          <a href="./src/pages/ia.html" class="app">
+            <span class="material-icons">auto_awesome</span>
+            <p>IA</p>
+          </a>
+        </section>
+      </main>
+      <footer class="barra-inferior">
+        <button class="material-icons" onclick="history.back()">
+          arrow_back
+        </button>
+        <button
+          class="material-icons"
+          onclick="window.location.href = './index.html'"
+        >
+          radio_button_unchecked
+        </button>
+        <button class="material-icons" onclick="alert('Abrir apps recentes')">
+          menu
+        </button>
+      </footer>
+    </div>
+  </body>
+</html>
