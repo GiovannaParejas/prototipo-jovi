@@ -1,4 +1,4 @@
-const fotos = [
+const fotosFixas = [
   {
     src: "../assets/digitalizacao.png",
     titulo: "Design Thinking - Process",
@@ -36,6 +36,24 @@ const fotos = [
     tipo: "pessoal",
   },
 ];
+
+const fotosExtras = JSON.parse(localStorage.getItem("fotos_extras") || "[]");
+const fotos = [...fotosFixas, ...fotosExtras];
+
+setTimeout(() => {
+  // Monta grid pessoal dinamicamente
+  const gridPessoal = document.getElementById("grid-pessoal");
+  fotos
+    .filter((f) => f.tipo === "pessoal")
+    .forEach((foto, i) => {
+      const index = fotos.indexOf(foto);
+      const div = document.createElement("div");
+      div.className = "foto-item";
+      div.onclick = () => abrirFoto(index);
+      div.innerHTML = `<img src="${foto.src}" alt="${foto.titulo}">`;
+      gridPessoal.appendChild(div);
+    });
+}, 0);
 
 let fotoAtual = null;
 
@@ -449,15 +467,17 @@ function fecharPasta() {
 }
 
 function aplicarBtnEsquerda(index) {
-    setTimeout(() => {
-        const btnEsq = document.getElementById('btn-esquerda');
-        if (!btnEsq) return;
-        if (index === 1) {
-            btnEsq.innerHTML = '<span class="material-icons">translate</span><span>Traduzir</span>';
-            btnEsq.onclick = () => abrirFoto(2);
-        } else if (index === 2) {
-            btnEsq.innerHTML = '<span class="material-icons">arrow_back</span><span>Voltar</span>';
-            btnEsq.onclick = () => abrirFoto(1);
-        }
-    }, 0);
+  setTimeout(() => {
+    const btnEsq = document.getElementById("btn-esquerda");
+    if (!btnEsq) return;
+    if (index === 1) {
+      btnEsq.innerHTML =
+        '<span class="material-icons">translate</span><span>Traduzir</span>';
+      btnEsq.onclick = () => abrirFoto(2);
+    } else if (index === 2) {
+      btnEsq.innerHTML =
+        '<span class="material-icons">arrow_back</span><span>Voltar</span>';
+      btnEsq.onclick = () => abrirFoto(1);
+    }
+  }, 0);
 }
