@@ -1,58 +1,31 @@
 const fotosFixas = [
-  {
-    src: "../assets/digitalizacao.png",
-    titulo: "Design Thinking - Process",
-    nota: 2,
-    tipo: "estudo",
-  },
-  {
-    src: "../assets/holiday.png",
-    titulo: "Holiday at Sea",
-    nota: 0,
-    tipo: "estudo",
-  },
-  {
-    src: "../assets/traducao.png",
-    titulo: "Férias no Mar (Tradução)",
-    nota: 1,
-    tipo: "estudo",
-  },
-  {
-    src: "../assets/sapo-zoo.jpeg",
-    titulo: "Zoo - São Paulo",
-    nota: null,
-    tipo: "pessoal",
-  },
-  {
-    src: "../assets/elefante-zoo.jpeg",
-    titulo: "Zoo - São Paulo",
-    nota: null,
-    tipo: "pessoal",
-  },
-  {
-    src: "../assets/jacare-zoo.jpeg",
-    titulo: "Zoo - São Paulo",
-    nota: null,
-    tipo: "pessoal",
-  },
+  { src: '../assets/digitalizacao.png', titulo: 'Design Thinking - Process', nota: 2, tipo: 'estudo' },
+  { src: '../assets/holiday.png', titulo: 'Holiday at Sea', nota: 0, tipo: 'estudo' },
+  { src: '../assets/traducao.png', titulo: 'Férias no Mar (Tradução)', nota: 1, tipo: 'estudo' },
+  { src: '../assets/sapo-zoo.jpeg', titulo: 'Zoo - São Paulo', nota: null, tipo: 'pessoal' },
+  { src: '../assets/elefante-zoo.jpeg', titulo: 'Zoo - São Paulo', nota: null, tipo: 'pessoal' },
+  { src: '../assets/jacare-zoo.jpeg', titulo: 'Zoo - São Paulo', nota: null, tipo: 'pessoal' },
 ];
 
-const fotosExtras = JSON.parse(localStorage.getItem("fotos_extras") || "[]");
+const fotosExtras = JSON.parse(localStorage.getItem('fotos_extras') || '[]');
 const fotos = [...fotosFixas, ...fotosExtras];
 
 setTimeout(() => {
-  // Monta grid pessoal dinamicamente
-  const gridPessoal = document.getElementById("grid-pessoal");
-  fotos
-    .filter((f) => f.tipo === "pessoal")
-    .forEach((foto, i) => {
-      const index = fotos.indexOf(foto);
-      const div = document.createElement("div");
-      div.className = "foto-item";
-      div.onclick = () => abrirFoto(index);
-      div.innerHTML = `<img src="${foto.src}" alt="${foto.titulo}">`;
-      gridPessoal.appendChild(div);
-    });
+  const gridPessoal = document.getElementById('grid-pessoal');
+  if (!gridPessoal) return;
+
+  // Recarrega fotos do localStorage
+  const fotosExtrasAtualizadas = JSON.parse(localStorage.getItem('fotos_extras') || '[]');
+  const todosOsIndices = [...fotosFixas, ...fotosExtrasAtualizadas];
+
+  todosOsIndices.filter(f => f.tipo === 'pessoal').forEach((foto) => {
+    const index = todosOsIndices.indexOf(foto);
+    const div = document.createElement('div');
+    div.className = 'foto-item';
+    div.onclick = () => abrirFoto(index);
+    div.innerHTML = `<img src="${foto.src}" alt="${foto.titulo}">`;
+    gridPessoal.appendChild(div);
+  });
 }, 0);
 
 let fotoAtual = null;

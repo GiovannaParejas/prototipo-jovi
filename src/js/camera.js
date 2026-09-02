@@ -389,14 +389,14 @@ function capturarEDigitalizar(video, wrapper) {
       const img = document.createElement("img");
       img.id = "resultado-copia";
       img.src = imagemCapturada;
-      img.style.cssText = `
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        object-fit: contain;
-        z-index: 4;
-        filter: contrast(1.2) brightness(1.1);
-      `;
+img.style.cssText = `
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  object-fit: contain;
+  z-index: 4;
+  filter: contrast(1.8) brightness(1.15) saturate(0.3) sharpen(1);
+`;
       wrapper.appendChild(img);
 
       const btnFechar = document.createElement("button");
