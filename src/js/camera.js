@@ -464,9 +464,19 @@ function selecionarAcao(acao, el) {
 
   const video = document.getElementById("camera-feed");
 
-  if (cameraAtiva) {
+if (cameraAtiva) {
     video.srcObject = streamAtual;
     video.play();
+
+    if (acao === "digitalizar") {
+      const wrapper = document.querySelector(".camera-wrapper");
+      const btnCaptura = document.getElementById("btn-captura");
+      btnCaptura.style.borderColor = "var(--cor-amarelo)";
+      btnCaptura.onclick = () => {
+        btnCaptura.onclick = null;
+        capturarEDigitalizar(video, wrapper);
+      };
+    }
 
     if (acao === "copiar") {
       const wrapper = document.querySelector(".camera-wrapper");
@@ -477,28 +487,27 @@ function selecionarAcao(acao, el) {
         capturarEReconhecer(video, wrapper);
       };
     }
+
     if (acao === "traduzir") {
       const wrapper = document.querySelector(".camera-wrapper");
-
-      // Seletor de idioma
       const seletor = document.createElement("div");
       seletor.id = "seletor-idioma";
       seletor.style.cssText = `
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 247, 0, 0.4);
-    border-radius: 16px;
-    padding: 20px;
-    z-index: 10;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-width: 220px;
-  `;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 247, 0, 0.4);
+        border-radius: 16px;
+        padding: 20px;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        min-width: 220px;
+      `;
 
       const titulo = document.createElement("p");
       titulo.textContent = "Traduzir para:";
@@ -512,20 +521,19 @@ function selecionarAcao(acao, el) {
         { label: "🇫🇷 Francês", value: "francês" },
       ];
 
-      idiomas.forEach((idioma) => {
+      idiomas.forEach(idioma => {
         const btnIdioma = document.createElement("button");
         btnIdioma.textContent = idioma.label;
         btnIdioma.style.cssText = `
-      background: rgba(255, 255, 255, 0.1);
-      color: #FFF;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      padding: 10px 16px;
-      font-size: 13px;
-      cursor: pointer;
-      text-align: left;
-      transition: 0.2s;
-    `;
+          background: rgba(255, 255, 255, 0.1);
+          color: #FFF;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          border-radius: 10px;
+          padding: 10px 16px;
+          font-size: 13px;
+          cursor: pointer;
+          text-align: left;
+        `;
         btnIdioma.onclick = () => {
           seletor.remove();
           const btnCaptura = document.getElementById("btn-captura");
@@ -544,15 +552,13 @@ function selecionarAcao(acao, el) {
     return;
   }
 
+  // Fluxo simulado — sem câmera real
   if (acao === "digitalizar") {
-  const wrapper = document.querySelector(".camera-wrapper");
-  const btnCaptura = document.getElementById("btn-captura");
-  btnCaptura.style.borderColor = "var(--cor-amarelo)";
-  btnCaptura.onclick = () => {
-    btnCaptura.onclick = null;
-    capturarEDigitalizar(video, wrapper);
-  };
-}else if (acao === "traduzir") {
+    video.loop = false;
+    video.src = "../assets/cadernoNaMesa.mp4";
+    video.play();
+  } else if (acao === "traduzir") {
+    // resto do fluxo simulado
     video.loop = false;
     video.src = "../assets/videoFolhaIngles.mp4";
     video.play();
