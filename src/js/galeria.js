@@ -17,7 +17,6 @@ setTimeout(() => {
   const fotosExtrasAtualizadas = JSON.parse(localStorage.getItem('fotos_extras') || '[]');
   const todasFotos = [...fotosFixas, ...fotosExtrasAtualizadas];
 
-  // Atualiza o array fotos global
   fotos.length = 0;
   todasFotos.forEach(f => fotos.push(f));
 
@@ -29,6 +28,8 @@ setTimeout(() => {
     div.innerHTML = `<img src="${foto.src}" alt="${foto.titulo}">`;
     gridPessoal.appendChild(div);
   });
+
+  renderizarPastas();
 }, 0);
 let fotoAtual = null;
 
@@ -455,4 +456,151 @@ function aplicarBtnEsquerda(index) {
       btnEsq.onclick = () => abrirFoto(1);
     }
   }, 0);
+}
+
+function criarPasta() {
+  const wrapper = document.querySelector('.celular');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'overlay-nova-pasta';
+  overlay.style.cssText = `
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+
+  const modal = document.createElement('div');
+  modal.style.cssText = `
+    background: #1A1A1A;
+    border-radius: 16px;
+    padding: 20px;
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid var(--cor-cinza-borda);
+  `;
+
+  const titulo = document.createElement('p');
+  titulo.textContent = 'Nome da pasta';
+  titulo.style.cssText = `color: #FFF; font-size: 14px; font-weight: 600; margin: 0;`;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'Ex: Matemática';
+  input.style.cssText = `
+    background: #2B2B2B;
+    border: 1px solid var(--cor-cinza-borda);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #FFF;
+    font-size: 13px;
+    outline: none;
+  `;
+
+  const botoes = document.createElement('div');
+  botoes.style.cssText = `display: flex; gap: 8px; justify-content: flex-end;`;
+
+  const btnCancelar = document.createElement('button');
+  btnCancelar.textContent = 'Cancelar';
+  btnCancelar.style.cssText = `
+    background: transparent;
+    border: 1px solid var(--cor-cinza-borda);
+    border-radius: 10px;
+    color: var(--cor-texto-muted);
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+  `;
+  btnCancelar.onclick = () => overlay.remove();
+
+  const btnConfirmar = document.createElement('button');
+  btnConfirmar.textContent = 'Criar';
+  btnConfirmar.style.cssText = `
+    background: #2B7FE8;
+    border: none;
+    border-radius: 10px;
+    color: #FFF;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  `;
+  btnConfirmar.onclick = () => {
+    const nome = input.value.trim();
+    if (!nome) return;
+
+    // Salva no localStorage
+    const pastasExtras = JSON.parse(localStorage.getItem('pastas_extras') || '[]');
+    pastasExtras.push({ nome, fotos: [] });
+    localStorage.setItem('pastas_extras', JSON.stringify(pastasExtras));
+
+    overlay.remove();
+    renderizarPastas();
+    mostrarAviso('Pasta criada!');
+  };
+
+  botoes.appendChild(btnCancelar);
+  botoes.appendChild(btnConfirmar);
+  modal.appendChild(titulo);
+  modal.appendChild(input);
+  modal.appendChild(botoes);
+  overlay.appendChild(modal);
+  wrapper.appendChild(overlay);
+
+  setTimeout(() => input.focus(), 100);
+}
+
+function renderizarPastas() {
+  const listaPastas = document.getElementById('lista-pastas');
+  listaPastas.innerHTML = '';
+
+  // Pastas fixas
+  const pastasFixas = [
+    { nome: 'Software e Total Experience', fotos: [0] },
+    { nome: 'Inglês', fotos: [1, 2] },
+  ];
+
+  const pastasExtras = JSON.parse(localStorage.getItem('pastas_extras') || '[]');
+  const todasPastas = [...pastasFixas, ...pastasExtras];
+
+  todasPastas.forEach(pasta => {
+    const div = document.createElement('div');
+    div.className = 'pasta';
+    div.onclick = () => abrirPasta(pasta.nome);
+
+    const preview = document.createElement('div');
+    preview.className = 'pasta-preview';
+
+    if (pasta.fotos.length > 0) {
+      pasta.fotos.slice(0, 2).forEach(index => {
+        const img = document.createElement('img');
+        img.src = fotos[index]?.src || '';
+        img.alt = '';
+        preview.appendChild(img);
+      });
+    } else {
+      preview.style.background = '#1A1A1A';
+      preview.style.display = 'flex';
+      preview.style.alignItems = 'center';
+      preview.style.justifyContent = 'center';
+      preview.innerHTML = '<span class="material-icons" style="color:#444; font-size:32px;">folder_open</span>';
+    }
+
+    const info = document.createElement('div');
+    info.className = 'pasta-info';
+    info.innerHTML = `
+      <span class="material-icons">folder</span>
+      <span>${pasta.nome}</span>
+    `;
+
+    div.appendChild(preview);
+    div.appendChild(info);
+    listaPastas.appendChild(div);
+  });
 }

@@ -59,23 +59,18 @@
 
           <!-- Modo Estudo: pastas -->
 <div id="view-estudo" class="oculto">
-  <div class="pasta" onclick="abrirPasta('Software e Total Experience')">
-    <div class="pasta-preview">
-      <img src="../assets/digitalizacao.png" alt="">
-    </div>
-    <div class="pasta-info">
-      <span class="material-icons">folder</span>
-      <span>Software e Total Experience</span>
-    </div>
+  <div class="estudo-header">
+    <button class="btn-nova-pasta" onclick="criarPasta()">
+      <span class="material-icons">create_new_folder</span>
+      Nova pasta
+    </button>
   </div>
-  <div class="pasta" onclick="abrirPasta('Inglês')">
-    <div class="pasta-preview">
-      <img src="../assets/holiday.png" alt="">
-      <img src="../assets/traducao.png" alt="">
+  <div id="lista-pastas">
+    <div class="pasta" onclick="abrirPasta('Software e Total Experience')">
+      <!-- conteúdo igual ao que já está -->
     </div>
-    <div class="pasta-info">
-      <span class="material-icons">folder</span>
-      <span>Inglês</span>
+    <div class="pasta" onclick="abrirPasta('Inglês')">
+      <!-- conteúdo igual ao que já está -->
     </div>
   </div>
 </div>

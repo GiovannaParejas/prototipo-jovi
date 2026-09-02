@@ -463,3 +463,27 @@ body {
         overflow: hidden;
     }
 }
+
+.estudo-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 0 12px;
+}
+
+.btn-nova-pasta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--cor-cinza-escuro);
+  border: 1px solid var(--cor-cinza-borda);
+  border-radius: 10px;
+  color: var(--cor-branco);
+  font-size: 13px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+.btn-nova-pasta .material-icons {
+  font-size: 18px;
+  color: var(--cor-texto-muted);
+}
