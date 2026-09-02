@@ -14,12 +14,15 @@ setTimeout(() => {
   const gridPessoal = document.getElementById('grid-pessoal');
   if (!gridPessoal) return;
 
-  // Recarrega fotos do localStorage
   const fotosExtrasAtualizadas = JSON.parse(localStorage.getItem('fotos_extras') || '[]');
-  const todosOsIndices = [...fotosFixas, ...fotosExtrasAtualizadas];
+  const todasFotos = [...fotosFixas, ...fotosExtrasAtualizadas];
 
-  todosOsIndices.filter(f => f.tipo === 'pessoal').forEach((foto) => {
-    const index = todosOsIndices.indexOf(foto);
+  // Atualiza o array fotos global
+  fotos.length = 0;
+  todasFotos.forEach(f => fotos.push(f));
+
+  todasFotos.filter(f => f.tipo === 'pessoal').forEach((foto) => {
+    const index = todasFotos.indexOf(foto);
     const div = document.createElement('div');
     div.className = 'foto-item';
     div.onclick = () => abrirFoto(index);
@@ -27,7 +30,6 @@ setTimeout(() => {
     gridPessoal.appendChild(div);
   });
 }, 0);
-
 let fotoAtual = null;
 
 const notaUrls = [

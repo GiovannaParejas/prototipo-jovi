@@ -395,7 +395,7 @@ img.style.cssText = `
   width: 100%; height: 100%;
   object-fit: contain;
   z-index: 4;
-  filter: contrast(1.8) brightness(1.15) saturate(0.3) sharpen(1);
+  filter: contrast(1.8) brightness(1.15) saturate(0.3);
 `;
       wrapper.appendChild(img);
 
