@@ -7,11 +7,11 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  const { imageBase64, modo } = req.body;
+const { imageBase64, modo, idioma = 'português' } = req.body;
 
-  const prompt = modo === 'traduzir'
-    ? 'Extraia e traduza para português todo o texto visível nesta imagem. Retorne apenas o texto traduzido, sem explicações.'
-    : 'Extraia todo o texto visível nesta imagem. Retorne apenas o texto puro, sem formatação, sem JSON, sem explicações.';
+const prompt = modo === 'traduzir'
+  ? `Extraia e traduza para ${idioma} todo o texto visível nesta imagem. Retorne apenas o texto traduzido, sem explicações.`
+  : 'Extraia todo o texto visível nesta imagem. Retorne apenas o texto puro, sem formatação, sem JSON, sem explicações.';
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${process.env.GEMINI_KEY}`,

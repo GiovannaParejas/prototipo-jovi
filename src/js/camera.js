@@ -8,7 +8,7 @@ async function reconhecerComGemini(imagemBase64, modo = "copiar") {
   const response = await fetch("https://prototipo-jovi.vercel.app/api/gemini", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ imageBase64: imagemBase64, modo }),
+    body: JSON.stringify({ imageBase64: imagemBase64, modo, idioma }),
   });
 
   const data = await response.json();
@@ -89,6 +89,7 @@ function limparModo() {
   document.getElementById("aviso-copia")?.remove();
   document.getElementById("btn-fechar-selecao")?.remove();
   document.getElementById("caixa-texto-ocr")?.remove();
+  document.getElementById("seletor-idioma")?.remove();
   video.style.display = "block";
   video.onended = null;
 }
@@ -242,7 +243,7 @@ function capturarEReconhecer(video, wrapper) {
   });
 }
 
-function capturarETradzuir(video, wrapper) {
+function capturarETradzuir(video, wrapper, idioma = "português") {
   const msg = document.createElement("div");
   msg.id = "msg-reconhecimento";
   msg.textContent = "Capturando...";
@@ -288,7 +289,7 @@ function capturarETradzuir(video, wrapper) {
       btnFechar.onclick = voltarParaLoop;
       wrapper.appendChild(btnFechar);
 
-      reconhecerComGemini(imagemBase64, "traduzir")
+      reconhecerComGemini(imagemBase64, "traduzir", idioma)
         .then((textoTraduzido) => {
           msg.remove();
 
