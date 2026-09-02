@@ -58,26 +58,28 @@
           </div>
 
           <!-- Modo Estudo: pastas -->
-<div id="view-estudo" class="oculto">
-  <div class="estudo-header">
-    <button class="btn-nova-pasta" onclick="criarPasta()">
-      <span class="material-icons">create_new_folder</span>
-      Nova pasta
-    </button>
-  </div>
-  <div id="lista-pastas">
-    <div class="pasta" onclick="abrirPasta('Software e Total Experience')">
-      <!-- conteúdo igual ao que já está -->
-    </div>
-    <div class="pasta" onclick="abrirPasta('Inglês')">
-      <!-- conteúdo igual ao que já está -->
-    </div>
-  </div>
-</div>
+          <div id="view-estudo" class="oculto">
+            <div class="estudo-header">
+              <button class="btn-nova-pasta" onclick="criarPasta()">
+                <span class="material-icons">add</span>
+              </button>
+            </div>
+            <div id="lista-pastas">
+              <div
+                class="pasta"
+                onclick="abrirPasta('Software e Total Experience')"
+              >
+                <!-- conteúdo igual ao que já está -->
+              </div>
+              <div class="pasta" onclick="abrirPasta('Inglês')">
+                <!-- conteúdo igual ao que já está -->
+              </div>
+            </div>
+          </div>
           <!-- Modo Pessoal: grid 2 colunas -->
           <div id="view-pessoal">
-  <div class="fotos-grid-pessoal" id="grid-pessoal"></div>
-</div>
+            <div class="fotos-grid-pessoal" id="grid-pessoal"></div>
+          </div>
         </main>
       </div>
 
@@ -159,9 +161,6 @@
           </button>
         </div>
 
-
-
-
         <div class="pdf-visualizacao">
           <div class="pdf-pagina"><img src="" alt="PDF" id="pdf-p1" /></div>
         </div>
@@ -171,15 +170,15 @@
         </div>
       </div>
 
-           <div class="tela oculto" id="tela-pasta">
+      <div class="tela oculto" id="tela-pasta">
         <div class="foto-header">
           <button class="btn-voltar" onclick="fecharPasta()">
             <span class="material-icons">arrow_back</span>
           </button>
           <span class="header-titulo" id="pasta-titulo"></span>
-          <div style="width:32px"></div>
+          <div style="width: 32px"></div>
         </div>
-        <div class="fotos-grid-pessoal" id="pasta-fotos" ></div>
+        <div class="fotos-grid-pessoal" id="pasta-fotos"></div>
       </div>
 
       <footer class="barra-inferior">

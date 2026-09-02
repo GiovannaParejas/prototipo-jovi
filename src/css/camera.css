@@ -471,19 +471,18 @@ body {
 }
 
 .btn-nova-pasta {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #2B7FE8;
+  border: none;
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: var(--cor-cinza-escuro);
-  border: 1px solid var(--cor-cinza-borda);
-  border-radius: 10px;
-  color: var(--cor-branco);
-  font-size: 13px;
-  padding: 8px 14px;
+  justify-content: center;
   cursor: pointer;
 }
 
 .btn-nova-pasta .material-icons {
-  font-size: 18px;
-  color: var(--cor-texto-muted);
+  font-size: 20px;
+  color: #FFF;
 }
