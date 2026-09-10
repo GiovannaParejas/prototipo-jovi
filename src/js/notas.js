@@ -220,11 +220,15 @@ function abrirCriarNota() {
   botoes.appendChild(btnCancelar);
   botoes.appendChild(btnCriar);
 
+  const grupoTipo = document.createElement("div");
+  grupoTipo.style.cssText = `display:flex; flex-direction:column; gap:6px;`;
+  grupoTipo.appendChild(labelTipo);
+  grupoTipo.appendChild(selectTipo);
+
   modal.appendChild(titulo);
   modal.appendChild(inputTitulo);
   modal.appendChild(textareaCorpo);
-  modal.appendChild(labelTipo);
-  modal.appendChild(selectTipo);
+  modal.appendChild(grupoTipo);
   modal.appendChild(botoes);
   overlay.appendChild(modal);
   celular.appendChild(overlay);
