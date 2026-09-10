@@ -513,8 +513,35 @@ function abrirPasta(nome) {
     div.style.aspectRatio = "1";
     div.style.overflow = "hidden";
     div.style.borderRadius = "8px";
-    div.onclick = () => abrirFotoDaPasta(index);
+    div.style.position = "relative";
     div.innerHTML = `<img src="${foto.src}" alt="${foto.titulo}" style="width:100%;height:100%;object-fit:cover;">`;
+
+    let pressTimer = null;
+    let longPressAtivado = false;
+
+    const iniciarPress = () => {
+      pressTimer = setTimeout(() => {
+        longPressAtivado = true;
+        mostrarBotaoRemover(div, nome, index);
+      }, 600);
+    };
+    const cancelarPress = () => clearTimeout(pressTimer);
+
+    div.addEventListener("touchstart", iniciarPress, { passive: true });
+    div.addEventListener("touchend", cancelarPress);
+    div.addEventListener("touchmove", cancelarPress);
+    div.addEventListener("mousedown", iniciarPress);
+    div.addEventListener("mouseup", cancelarPress);
+    div.addEventListener("mouseleave", cancelarPress);
+
+    div.onclick = () => {
+      if (longPressAtivado) {
+        longPressAtivado = false;
+        return;
+      }
+      abrirFotoDaPasta(index);
+    };
+
     grid.appendChild(div);
   });
 
@@ -543,6 +570,71 @@ function abrirPasta(nome) {
 
   document.getElementById("tela-galeria").classList.add("oculto");
   document.getElementById("tela-pasta").classList.remove("oculto");
+}
+
+function mostrarBotaoRemover(div, nomePasta, index) {
+  div.querySelector(".btn-remover-foto")?.remove();
+
+  const btnRemover = document.createElement("button");
+  btnRemover.className = "btn-remover-foto";
+  btnRemover.style.cssText = `
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.6);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+  `;
+  btnRemover.innerHTML =
+    '<span class="material-icons" style="font-size:16px; color:#E84545;">delete</span>';
+
+  const fecharAoClicarFora = (e) => {
+    if (!div.contains(e.target)) {
+      btnRemover.remove();
+      document.removeEventListener("click", fecharAoClicarFora);
+    }
+  };
+
+  btnRemover.onclick = (e) => {
+    e.stopPropagation();
+    document.removeEventListener("click", fecharAoClicarFora);
+    removerFotoDaPasta(nomePasta, index);
+  };
+  div.appendChild(btnRemover);
+
+  setTimeout(() => {
+    document.addEventListener("click", fecharAoClicarFora);
+  }, 0);
+}
+
+function removerFotoDaPasta(nomePasta, index) {
+  const pastasExtras = JSON.parse(localStorage.getItem("pastas_extras") || "[]");
+  const pastaIndex = pastasExtras.findIndex((p) => p.nome === nomePasta);
+
+  if (pastaIndex !== -1) {
+    pastasExtras[pastaIndex].fotos = pastasExtras[pastaIndex].fotos.filter(
+      (i) => i !== index,
+    );
+    localStorage.setItem("pastas_extras", JSON.stringify(pastasExtras));
+  } else {
+    const pastasOverride = JSON.parse(
+      localStorage.getItem("pastas_override") || "{}",
+    );
+    const atuais = pastasOverride[nomePasta] || pastas[nomePasta] || [];
+    pastasOverride[nomePasta] = atuais.filter((i) => i !== index);
+    localStorage.setItem("pastas_override", JSON.stringify(pastasOverride));
+  }
+
+  renderizarPastas();
+  abrirPasta(nomePasta);
+  mostrarAviso("Foto removida da pasta!");
 }
 
 function abrirFotoDaPasta(index) {
