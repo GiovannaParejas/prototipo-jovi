@@ -160,7 +160,7 @@ function abrirCriarNota() {
 
   const labelTipo = document.createElement("p");
   labelTipo.textContent = "Tipo";
-  labelTipo.style.cssText = `color:#AAA; font-size:12px; margin:4px 0 -4px;`;
+  labelTipo.style.cssText = `color:#AAA; font-size:12px; margin:0;`;
 
   const selectTipo = document.createElement("select");
   selectTipo.style.cssText = `
