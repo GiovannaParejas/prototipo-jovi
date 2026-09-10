@@ -45,9 +45,6 @@ const fotosExtras = JSON.parse(localStorage.getItem("fotos_extras") || "[]");
 const fotos = [...fotosFixas, ...fotosExtras];
 
 setTimeout(() => {
-  const gridPessoal = document.getElementById("grid-pessoal");
-  if (!gridPessoal) return;
-
   const fotosExtrasAtualizadas = JSON.parse(
     localStorage.getItem("fotos_extras") || "[]",
   );
@@ -55,17 +52,6 @@ setTimeout(() => {
 
   fotos.length = 0;
   todasFotos.forEach((f) => fotos.push(f));
-
-  todasFotos
-    .filter((f) => f.tipo === "pessoal")
-    .forEach((foto) => {
-      const index = todasFotos.indexOf(foto);
-      const div = document.createElement("div");
-      div.className = "foto-item";
-      div.onclick = () => abrirFoto(index);
-      div.innerHTML = `<img src="${foto.src}" alt="${foto.titulo}">`;
-      gridPessoal.appendChild(div);
-    });
 
   renderizarPastas();
 }, 0);
@@ -541,29 +527,9 @@ function abrirPasta(nome) {
     div.style.position = "relative";
     div.innerHTML = `<img src="${foto.src}" alt="${foto.titulo}" style="width:100%;height:100%;object-fit:cover;">`;
 
-    const btnMenuFoto = document.createElement("button");
-    btnMenuFoto.style.cssText = `
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.6);
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 5;
-    `;
-    btnMenuFoto.innerHTML =
-      '<span class="material-icons" style="font-size:16px; color:#FFF;">more_vert</span>';
-    btnMenuFoto.onclick = (e) => {
-      e.stopPropagation();
-      abrirMenuFoto(nome, index, btnMenuFoto);
-    };
-    div.appendChild(btnMenuFoto);
+    div.appendChild(
+      criarBotaoMenuFoto((btnRef) => abrirMenuFoto(nome, index, btnRef)),
+    );
 
     div.onclick = () => abrirFotoDaPasta(index);
 
@@ -597,7 +563,33 @@ function abrirPasta(nome) {
   document.getElementById("tela-pasta").classList.remove("oculto");
 }
 
-function abrirMenuFoto(nomePasta, index, btnRef) {
+function criarBotaoMenuFoto(aoClicar) {
+  const btn = document.createElement("button");
+  btn.style.cssText = `
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.6);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+  `;
+  btn.innerHTML =
+    '<span class="material-icons" style="font-size:16px; color:#FFF;">more_vert</span>';
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    aoClicar(btn);
+  };
+  return btn;
+}
+
+function abrirMenuAcoesFoto(btnRef, opcoes) {
   document.getElementById("menu-foto-pasta")?.remove();
 
   const menu = document.createElement("div");
@@ -619,27 +611,6 @@ function abrirMenuFoto(nomePasta, index, btnRef) {
   const btnRect = btnRef.getBoundingClientRect();
   menu.style.top = btnRect.bottom - celularRect.top + 4 + "px";
   menu.style.right = celularRect.right - btnRect.right + "px";
-
-  const opcoes = [
-    {
-      label: "Mover para cima",
-      icon: "arrow_upward",
-      color: "#FFF",
-      action: () => moverFotoNaPasta(nomePasta, index, "cima"),
-    },
-    {
-      label: "Mover para baixo",
-      icon: "arrow_downward",
-      color: "#FFF",
-      action: () => moverFotoNaPasta(nomePasta, index, "baixo"),
-    },
-    {
-      label: "Remover",
-      icon: "delete",
-      color: "#E84545",
-      action: () => removerFotoDaPasta(nomePasta, index),
-    },
-  ];
 
   opcoes.forEach((op) => {
     const btn = document.createElement("button");
@@ -669,6 +640,29 @@ function abrirMenuFoto(nomePasta, index, btnRef) {
   setTimeout(() => {
     document.addEventListener("click", () => menu.remove(), { once: true });
   }, 0);
+}
+
+function abrirMenuFoto(nomePasta, index, btnRef) {
+  abrirMenuAcoesFoto(btnRef, [
+    {
+      label: "Mover para cima",
+      icon: "arrow_upward",
+      color: "#FFF",
+      action: () => moverFotoNaPasta(nomePasta, index, "cima"),
+    },
+    {
+      label: "Mover para baixo",
+      icon: "arrow_downward",
+      color: "#FFF",
+      action: () => moverFotoNaPasta(nomePasta, index, "baixo"),
+    },
+    {
+      label: "Remover",
+      icon: "delete",
+      color: "#E84545",
+      action: () => removerFotoDaPasta(nomePasta, index),
+    },
+  ]);
 }
 
 function moverFotoNaPasta(nomePasta, index, direcao) {
@@ -1092,16 +1086,13 @@ function renderizarPastas() {
   });
 
   renderizarFotosSoltas(todasPastas, pastasExtras);
+  renderizarFotosPessoal(todasPastas, pastasExtras);
 }
 
 const CHAVE_ORDEM_SOLTAS = "__soltas__";
+const CHAVE_ORDEM_PESSOAL = "__pessoal__";
 
-function renderizarFotosSoltas(todasPastas, pastasExtras) {
-  const gridSoltas = document.getElementById("grid-estudo-soltas");
-  const tituloSoltas = document.getElementById("titulo-estudo-soltas");
-  if (!gridSoltas) return;
-  gridSoltas.innerHTML = "";
-
+function calcularIndicesOcupados(todasPastas, pastasExtras) {
   const pastasOverride = JSON.parse(localStorage.getItem("pastas_override") || "{}");
   const indicesOcupados = new Set();
   todasPastas.forEach((pasta) => {
@@ -1110,7 +1101,16 @@ function renderizarFotosSoltas(todasPastas, pastasExtras) {
     const indicesExtras = pastaExtra ? pastaExtra.fotos : [];
     [...indicesFixos, ...indicesExtras].forEach((i) => indicesOcupados.add(i));
   });
+  return indicesOcupados;
+}
 
+function renderizarFotosSoltas(todasPastas, pastasExtras) {
+  const gridSoltas = document.getElementById("grid-estudo-soltas");
+  const tituloSoltas = document.getElementById("titulo-estudo-soltas");
+  if (!gridSoltas) return;
+  gridSoltas.innerHTML = "";
+
+  const indicesOcupados = calcularIndicesOcupados(todasPastas, pastasExtras);
   const removidas = JSON.parse(localStorage.getItem("fotos_estudo_removidas") || "[]");
 
   const fotosSoltasBase = fotos.reduce((acc, foto, index) => {
@@ -1132,59 +1132,51 @@ function renderizarFotosSoltas(todasPastas, pastasExtras) {
     div.style.position = "relative";
     div.innerHTML = `<img src="${foto.src}" alt="${foto.titulo}">`;
 
-    const btnMenuFoto = document.createElement("button");
-    btnMenuFoto.style.cssText = `
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.6);
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 5;
-    `;
-    btnMenuFoto.innerHTML =
-      '<span class="material-icons" style="font-size:16px; color:#FFF;">more_vert</span>';
-    btnMenuFoto.onclick = (e) => {
-      e.stopPropagation();
-      abrirMenuFotoSolta(index, btnMenuFoto);
-    };
-    div.appendChild(btnMenuFoto);
+    div.appendChild(
+      criarBotaoMenuFoto((btnRef) => abrirMenuFotoSolta(index, btnRef)),
+    );
 
     div.onclick = () => abrirFoto(index);
     gridSoltas.appendChild(div);
   });
 }
 
+function renderizarFotosPessoal(todasPastas, pastasExtras) {
+  const gridPessoal = document.getElementById("grid-pessoal");
+  if (!gridPessoal) return;
+  gridPessoal.innerHTML = "";
+
+  const indicesOcupados = calcularIndicesOcupados(todasPastas, pastasExtras);
+  const removidas = JSON.parse(localStorage.getItem("fotos_pessoal_removidas") || "[]");
+
+  const fotosPessoalBase = fotos.reduce((acc, foto, index) => {
+    if (foto.tipo === "pessoal" && !indicesOcupados.has(index) && !removidas.includes(index)) {
+      acc.push(index);
+    }
+    return acc;
+  }, []);
+
+  const fotosPessoal = ordenarComOverride(CHAVE_ORDEM_PESSOAL, fotosPessoalBase);
+
+  fotosPessoal.forEach((index) => {
+    const foto = fotos[index];
+    const div = document.createElement("div");
+    div.className = "foto-item";
+    div.dataset.index = index;
+    div.style.position = "relative";
+    div.innerHTML = `<img src="${foto.src}" alt="${foto.titulo}">`;
+
+    div.appendChild(
+      criarBotaoMenuFoto((btnRef) => abrirMenuFotoPessoal(index, btnRef)),
+    );
+
+    div.onclick = () => abrirFoto(index);
+    gridPessoal.appendChild(div);
+  });
+}
+
 function abrirMenuFotoSolta(index, btnRef) {
-  document.getElementById("menu-foto-pasta")?.remove();
-
-  const menu = document.createElement("div");
-  menu.id = "menu-foto-pasta";
-  menu.style.cssText = `
-    position: absolute;
-    background: #1A1A1A;
-    border: 1px solid #2B2B2B;
-    border-radius: 10px;
-    padding: 4px 0;
-    z-index: 100;
-    min-width: 170px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-  `;
-
-  const celularRect = document
-    .querySelector(".celular")
-    .getBoundingClientRect();
-  const btnRect = btnRef.getBoundingClientRect();
-  menu.style.top = btnRect.bottom - celularRect.top + 4 + "px";
-  menu.style.right = celularRect.right - btnRect.right + "px";
-
-  const opcoes = [
+  abrirMenuAcoesFoto(btnRef, [
     {
       label: "Mover para cima",
       icon: "arrow_upward",
@@ -1209,40 +1201,40 @@ function abrirMenuFotoSolta(index, btnRef) {
       color: "#E84545",
       action: () => removerFotoSolta(index),
     },
-  ];
-
-  opcoes.forEach((op) => {
-    const btn = document.createElement("button");
-    btn.style.cssText = `
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-      background: transparent;
-      border: none;
-      padding: 10px 14px;
-      color: ${op.color};
-      font-size: 13px;
-      cursor: pointer;
-      text-align: left;
-    `;
-    btn.innerHTML = `<span class="material-icons" style="font-size:16px; color:${op.color};">${op.icon}</span>${op.label}`;
-    btn.onclick = () => {
-      menu.remove();
-      op.action();
-    };
-    menu.appendChild(btn);
-  });
-
-  document.querySelector(".celular").appendChild(menu);
-
-  setTimeout(() => {
-    document.addEventListener("click", () => menu.remove(), { once: true });
-  }, 0);
+  ]);
 }
 
-function moverFotoSolta(index, direcao) {
-  const grid = document.getElementById("grid-estudo-soltas");
+function abrirMenuFotoPessoal(index, btnRef) {
+  abrirMenuAcoesFoto(btnRef, [
+    {
+      label: "Mover para cima",
+      icon: "arrow_upward",
+      color: "#FFF",
+      action: () => moverFotoPessoal(index, "cima"),
+    },
+    {
+      label: "Mover para baixo",
+      icon: "arrow_downward",
+      color: "#FFF",
+      action: () => moverFotoPessoal(index, "baixo"),
+    },
+    {
+      label: "Adicionar a pasta",
+      icon: "create_new_folder",
+      color: "#FFF",
+      action: () => abrirSeletorPastas(index),
+    },
+    {
+      label: "Remover",
+      icon: "delete",
+      color: "#E84545",
+      action: () => removerFotoPessoal(index),
+    },
+  ]);
+}
+
+function moverFotoEmGrid(gridId, chaveOrdem, index, direcao) {
+  const grid = document.getElementById(gridId);
   const ordemAtual = [...grid.querySelectorAll(".foto-item")].map((item) =>
     Number(item.dataset.index),
   );
@@ -1256,20 +1248,36 @@ function moverFotoSolta(index, direcao) {
   ];
 
   const ordensFotos = JSON.parse(localStorage.getItem("ordem_fotos_pastas") || "{}");
-  ordensFotos[CHAVE_ORDEM_SOLTAS] = ordemAtual;
+  ordensFotos[chaveOrdem] = ordemAtual;
   localStorage.setItem("ordem_fotos_pastas", JSON.stringify(ordensFotos));
 
   renderizarPastas();
 }
 
-function removerFotoSolta(index) {
-  const removidas = JSON.parse(localStorage.getItem("fotos_estudo_removidas") || "[]");
+function removerFotoComChave(chaveLocalStorage, index) {
+  const removidas = JSON.parse(localStorage.getItem(chaveLocalStorage) || "[]");
   if (!removidas.includes(index)) {
     removidas.push(index);
-    localStorage.setItem("fotos_estudo_removidas", JSON.stringify(removidas));
+    localStorage.setItem(chaveLocalStorage, JSON.stringify(removidas));
   }
   renderizarPastas();
   mostrarAviso("Foto removida!");
+}
+
+function moverFotoSolta(index, direcao) {
+  moverFotoEmGrid("grid-estudo-soltas", CHAVE_ORDEM_SOLTAS, index, direcao);
+}
+
+function removerFotoSolta(index) {
+  removerFotoComChave("fotos_estudo_removidas", index);
+}
+
+function moverFotoPessoal(index, direcao) {
+  moverFotoEmGrid("grid-pessoal", CHAVE_ORDEM_PESSOAL, index, direcao);
+}
+
+function removerFotoPessoal(index) {
+  removerFotoComChave("fotos_pessoal_removidas", index);
 }
 
 function abrirSeletorPastas(indexFoto) {
