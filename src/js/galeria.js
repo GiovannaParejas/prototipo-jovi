@@ -448,12 +448,10 @@ function abrirSeletorFotos(nomePasta) {
   fotos.forEach((foto, index) => {
     const div = document.createElement("div");
     div.style.cssText = `
-      aspect-ratio: 1;
-      overflow: hidden;
       cursor: pointer;
       position: relative;
     `;
-    div.innerHTML = `<img src="${foto.src}" style="width:100%; height:100%; object-fit:cover;">`;
+    div.innerHTML = `<img src="${foto.src}" style="width:100%; height:auto; display:block;">`;
     div.onclick = () => adicionarFotoNaPasta(nomePasta, index, overlay);
     grid.appendChild(div);
   });
