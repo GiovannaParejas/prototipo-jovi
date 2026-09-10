@@ -918,6 +918,118 @@ function renderizarPastas() {
     wrapper.appendChild(div);
     listaPastas.appendChild(wrapper);
   });
+
+  renderizarFotosSoltas(todasPastas, pastasExtras);
+}
+
+function renderizarFotosSoltas(todasPastas, pastasExtras) {
+  const gridSoltas = document.getElementById("grid-estudo-soltas");
+  const tituloSoltas = document.getElementById("titulo-estudo-soltas");
+  if (!gridSoltas) return;
+  gridSoltas.innerHTML = "";
+
+  const pastasOverride = JSON.parse(localStorage.getItem("pastas_override") || "{}");
+  const indicesOcupados = new Set();
+  todasPastas.forEach((pasta) => {
+    const indicesFixos = pastasOverride[pasta.nome] || pasta.fotos || [];
+    const pastaExtra = pastasExtras.find((p) => p.nome === pasta.nome);
+    const indicesExtras = pastaExtra ? pastaExtra.fotos : [];
+    [...indicesFixos, ...indicesExtras].forEach((i) => indicesOcupados.add(i));
+  });
+
+  const fotosSoltas = fotos.reduce((acc, foto, index) => {
+    if (foto.tipo === "estudo" && !indicesOcupados.has(index)) acc.push(index);
+    return acc;
+  }, []);
+
+  tituloSoltas?.classList.toggle("oculto", fotosSoltas.length === 0);
+
+  fotosSoltas.forEach((index) => {
+    const foto = fotos[index];
+    const div = document.createElement("div");
+    div.className = "foto-item";
+    div.onclick = () => abrirSeletorPastas(index);
+    div.innerHTML = `<img src="${foto.src}" alt="${foto.titulo}">`;
+    gridSoltas.appendChild(div);
+  });
+}
+
+function abrirSeletorPastas(indexFoto) {
+  const celular = document.querySelector(".celular");
+
+  const overlay = document.createElement("div");
+  overlay.id = "overlay-seletor-pastas";
+  overlay.style.cssText = `
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 70%;
+    background: #1A1A1A;
+    border-radius: 16px 16px 0 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  `;
+
+  const header = document.createElement("div");
+  header.style.cssText = `
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    border-bottom: 1px solid #2B2B2B;
+  `;
+  header.innerHTML = `
+    <p style="color:#FFF; font-size:14px; font-weight:600; margin:0;">Mover para pasta</p>
+    <button onclick="document.getElementById('overlay-seletor-pastas').remove()"
+      style="background:transparent; border:none; color:#FFF; cursor:pointer;">
+      <span class="material-icons">close</span>
+    </button>
+  `;
+
+  const lista = document.createElement("div");
+  lista.style.cssText = `
+    overflow-y: auto;
+    flex: 1;
+    padding: 8px;
+  `;
+
+  const pastasExcluidas = JSON.parse(localStorage.getItem("pastas_excluidas") || "[]");
+  const pastasFixas = [
+    { nome: "Software e Total Experience", fixa: true },
+    { nome: "Inglês", fixa: true },
+  ].filter((p) => !pastasExcluidas.includes(p.nome));
+  const pastasExtras = JSON.parse(localStorage.getItem("pastas_extras") || "[]");
+  const todasPastas = [...pastasFixas, ...pastasExtras];
+
+  if (todasPastas.length === 0) {
+    lista.innerHTML = `<p style="color:#888; font-size:13px; padding:12px;">Nenhuma pasta criada ainda.</p>`;
+  }
+
+  todasPastas.forEach((pasta) => {
+    const item = document.createElement("button");
+    item.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #2B2B2B;
+      padding: 14px 12px;
+      color: #FFF;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: left;
+    `;
+    item.innerHTML = `<span class="material-icons" style="font-size:18px; color:#888;">folder</span>${pasta.nome}`;
+    item.onclick = () => adicionarFotoNaPasta(pasta.nome, indexFoto, overlay);
+    lista.appendChild(item);
+  });
+
+  overlay.appendChild(header);
+  overlay.appendChild(lista);
+  celular.appendChild(overlay);
 }
 
 function abrirMenuPasta(nome, fixa, btnRef) {
