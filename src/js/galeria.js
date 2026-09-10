@@ -486,6 +486,27 @@ function adicionarFotoNaPasta(nomePasta, index, overlay) {
   abrirPasta(nomePasta);     // ← reabre a pasta com a nova foto
   mostrarAviso('Foto adicionada!');
 }
+
+function ordenarPorRecencia(nome, indicesFixos, indicesExtras) {
+  const baseOriginal = pastas[nome] || [];
+  const adicionadas = [
+    ...indicesFixos.filter((i) => !baseOriginal.includes(i)),
+    ...indicesExtras,
+  ];
+  const originaisPresentes = baseOriginal.filter((i) => indicesFixos.includes(i));
+  return [...new Set([...[...adicionadas].reverse(), ...originaisPresentes])];
+}
+
+function ordenarComOverride(nomePasta, indicesPadrao) {
+  const ordensFotos = JSON.parse(localStorage.getItem("ordem_fotos_pastas") || "{}");
+  const ordemSalva = ordensFotos[nomePasta];
+  if (!ordemSalva || ordemSalva.length === 0) return indicesPadrao;
+
+  const novos = indicesPadrao.filter((i) => !ordemSalva.includes(i));
+  const existentes = ordemSalva.filter((i) => indicesPadrao.includes(i));
+  return [...novos, ...existentes];
+}
+
 function abrirPasta(nome) {
   pastaAtual = nome;
   document.getElementById("pasta-titulo").textContent = nome;
@@ -503,44 +524,48 @@ function abrirPasta(nome) {
   const pastaExtra = pastasExtras.find((p) => p.nome === nome);
   const indicesFixos = pastasOverride[nome] || pastas[nome] || [];
   const indicesExtras = pastaExtra ? pastaExtra.fotos : [];
-  const todosIndices = [...new Set([...indicesFixos, ...indicesExtras])];
+  const todosIndices = ordenarComOverride(
+    nome,
+    ordenarPorRecencia(nome, indicesFixos, indicesExtras),
+  );
 
   todosIndices.forEach((index) => {
     const foto = fotos[index];
     if (!foto) return;
     const div = document.createElement("div");
     div.className = "foto-item";
+    div.dataset.index = index;
     div.style.aspectRatio = "1";
     div.style.overflow = "hidden";
     div.style.borderRadius = "8px";
     div.style.position = "relative";
     div.innerHTML = `<img src="${foto.src}" alt="${foto.titulo}" style="width:100%;height:100%;object-fit:cover;">`;
 
-    let pressTimer = null;
-    let longPressAtivado = false;
-
-    const iniciarPress = () => {
-      pressTimer = setTimeout(() => {
-        longPressAtivado = true;
-        mostrarBotaoRemover(div, nome, index);
-      }, 600);
+    const btnMenuFoto = document.createElement("button");
+    btnMenuFoto.style.cssText = `
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.6);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 5;
+    `;
+    btnMenuFoto.innerHTML =
+      '<span class="material-icons" style="font-size:16px; color:#FFF;">more_vert</span>';
+    btnMenuFoto.onclick = (e) => {
+      e.stopPropagation();
+      abrirMenuFoto(nome, index, btnMenuFoto);
     };
-    const cancelarPress = () => clearTimeout(pressTimer);
+    div.appendChild(btnMenuFoto);
 
-    div.addEventListener("touchstart", iniciarPress, { passive: true });
-    div.addEventListener("touchend", cancelarPress);
-    div.addEventListener("touchmove", cancelarPress);
-    div.addEventListener("mousedown", iniciarPress);
-    div.addEventListener("mouseup", cancelarPress);
-    div.addEventListener("mouseleave", cancelarPress);
-
-    div.onclick = () => {
-      if (longPressAtivado) {
-        longPressAtivado = false;
-        return;
-      }
-      abrirFotoDaPasta(index);
-    };
+    div.onclick = () => abrirFotoDaPasta(index);
 
     grid.appendChild(div);
   });
@@ -572,46 +597,100 @@ function abrirPasta(nome) {
   document.getElementById("tela-pasta").classList.remove("oculto");
 }
 
-function mostrarBotaoRemover(div, nomePasta, index) {
-  div.querySelector(".btn-remover-foto")?.remove();
+function abrirMenuFoto(nomePasta, index, btnRef) {
+  document.getElementById("menu-foto-pasta")?.remove();
 
-  const btnRemover = document.createElement("button");
-  btnRemover.className = "btn-remover-foto";
-  btnRemover.style.cssText = `
+  const menu = document.createElement("div");
+  menu.id = "menu-foto-pasta";
+  menu.style.cssText = `
     position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.6);
-    border: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 5;
+    background: #1A1A1A;
+    border: 1px solid #2B2B2B;
+    border-radius: 10px;
+    padding: 4px 0;
+    z-index: 100;
+    min-width: 170px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   `;
-  btnRemover.innerHTML =
-    '<span class="material-icons" style="font-size:16px; color:#E84545;">delete</span>';
 
-  const fecharAoClicarFora = (e) => {
-    if (!div.contains(e.target)) {
-      btnRemover.remove();
-      document.removeEventListener("click", fecharAoClicarFora);
-    }
-  };
+  const celularRect = document
+    .querySelector(".celular")
+    .getBoundingClientRect();
+  const btnRect = btnRef.getBoundingClientRect();
+  menu.style.top = btnRect.bottom - celularRect.top + 4 + "px";
+  menu.style.right = celularRect.right - btnRect.right + "px";
 
-  btnRemover.onclick = (e) => {
-    e.stopPropagation();
-    document.removeEventListener("click", fecharAoClicarFora);
-    removerFotoDaPasta(nomePasta, index);
-  };
-  div.appendChild(btnRemover);
+  const opcoes = [
+    {
+      label: "Mover para cima",
+      icon: "arrow_upward",
+      color: "#FFF",
+      action: () => moverFotoNaPasta(nomePasta, index, "cima"),
+    },
+    {
+      label: "Mover para baixo",
+      icon: "arrow_downward",
+      color: "#FFF",
+      action: () => moverFotoNaPasta(nomePasta, index, "baixo"),
+    },
+    {
+      label: "Remover",
+      icon: "delete",
+      color: "#E84545",
+      action: () => removerFotoDaPasta(nomePasta, index),
+    },
+  ];
+
+  opcoes.forEach((op) => {
+    const btn = document.createElement("button");
+    btn.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      background: transparent;
+      border: none;
+      padding: 10px 14px;
+      color: ${op.color};
+      font-size: 13px;
+      cursor: pointer;
+      text-align: left;
+    `;
+    btn.innerHTML = `<span class="material-icons" style="font-size:16px; color:${op.color};">${op.icon}</span>${op.label}`;
+    btn.onclick = () => {
+      menu.remove();
+      op.action();
+    };
+    menu.appendChild(btn);
+  });
+
+  document.querySelector(".celular").appendChild(menu);
 
   setTimeout(() => {
-    document.addEventListener("click", fecharAoClicarFora);
+    document.addEventListener("click", () => menu.remove(), { once: true });
   }, 0);
+}
+
+function moverFotoNaPasta(nomePasta, index, direcao) {
+  const grid = document.getElementById("pasta-fotos");
+  const ordemAtual = [...grid.querySelectorAll(".foto-item")].map((item) =>
+    Number(item.dataset.index),
+  );
+  const posicao = ordemAtual.indexOf(index);
+  const novaPosicao = direcao === "cima" ? posicao - 1 : posicao + 1;
+  if (novaPosicao < 0 || novaPosicao >= ordemAtual.length) return;
+
+  [ordemAtual[posicao], ordemAtual[novaPosicao]] = [
+    ordemAtual[novaPosicao],
+    ordemAtual[posicao],
+  ];
+
+  const ordensFotos = JSON.parse(localStorage.getItem("ordem_fotos_pastas") || "{}");
+  ordensFotos[nomePasta] = ordemAtual;
+  localStorage.setItem("ordem_fotos_pastas", JSON.stringify(ordensFotos));
+
+  renderizarPastas();
+  abrirPasta(nomePasta);
 }
 
 function removerFotoDaPasta(nomePasta, index) {
@@ -959,7 +1038,10 @@ function renderizarPastas() {
     const indicesFixos = pastasOverride[pasta.nome] || pasta.fotos || [];
     const pastaExtra = pastasExtras.find((p) => p.nome === pasta.nome);
     const indicesExtras = pastaExtra ? pastaExtra.fotos : [];
-    const todosIndices = [...new Set([...indicesFixos, ...indicesExtras])];
+    const todosIndices = ordenarComOverride(
+      pasta.nome,
+      ordenarPorRecencia(pasta.nome, indicesFixos, indicesExtras),
+    );
 
     if (todosIndices.length > 0) {
       todosIndices.slice(0, 2).forEach((index) => {
