@@ -439,7 +439,7 @@ btnSalvar.onclick = () => {
     src: imagemCapturada,
     titulo: `Digitalização ${new Date().toLocaleDateString('pt-BR')}`,
     nota: null,
-    tipo: 'pessoal'
+    tipo: 'estudo'
   });
   localStorage.setItem('fotos_extras', JSON.stringify(fotos));
   console.log('Fotos salvas:', localStorage.getItem('fotos_extras'));
