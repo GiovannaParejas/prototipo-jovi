@@ -486,6 +486,31 @@ function adicionarFotoNaPasta(nomePasta, index, overlay) {
   abrirPasta(nomePasta);     // ← reabre a pasta com a nova foto
   mostrarAviso('Foto adicionada!');
 }
+
+function ordenarIndicesFotos(nomePasta, indices) {
+  const ordensFotos = JSON.parse(localStorage.getItem("ordem_fotos_pastas") || "{}");
+  const ordemSalva = ordensFotos[nomePasta] || [];
+  if (ordemSalva.length === 0) return indices;
+
+  return [...indices].sort((a, b) => {
+    const ia = ordemSalva.indexOf(a);
+    const ib = ordemSalva.indexOf(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+}
+
+function salvarOrdemFotosPasta(nomePasta) {
+  const grid = document.getElementById("pasta-fotos");
+  const ordem = [...grid.querySelectorAll(".foto-item")].map((item) =>
+    Number(item.dataset.index),
+  );
+  const ordensFotos = JSON.parse(localStorage.getItem("ordem_fotos_pastas") || "{}");
+  ordensFotos[nomePasta] = ordem;
+  localStorage.setItem("ordem_fotos_pastas", JSON.stringify(ordensFotos));
+}
+
 function abrirPasta(nome) {
   pastaAtual = nome;
   document.getElementById("pasta-titulo").textContent = nome;
@@ -503,13 +528,16 @@ function abrirPasta(nome) {
   const pastaExtra = pastasExtras.find((p) => p.nome === nome);
   const indicesFixos = pastasOverride[nome] || pastas[nome] || [];
   const indicesExtras = pastaExtra ? pastaExtra.fotos : [];
-  const todosIndices = [...new Set([...indicesFixos, ...indicesExtras])];
+  const todosIndices = ordenarIndicesFotos(nome, [
+    ...new Set([...indicesFixos, ...indicesExtras]),
+  ]);
 
   todosIndices.forEach((index) => {
     const foto = fotos[index];
     if (!foto) return;
     const div = document.createElement("div");
     div.className = "foto-item";
+    div.dataset.index = index;
     div.style.aspectRatio = "1";
     div.style.overflow = "hidden";
     div.style.borderRadius = "8px";
@@ -517,26 +545,76 @@ function abrirPasta(nome) {
     div.innerHTML = `<img src="${foto.src}" alt="${foto.titulo}" style="width:100%;height:100%;object-fit:cover;">`;
 
     let pressTimer = null;
-    let longPressAtivado = false;
+    let segurando = false;
+    let arrastando = false;
+
+    const obterPosicao = (e) => {
+      if (e.touches && e.touches[0]) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+      return { x: e.clientX, y: e.clientY };
+    };
+
+    const onMove = (e) => {
+      if (!segurando) return;
+      if (e.cancelable) e.preventDefault();
+      arrastando = true;
+      div.style.opacity = "0.5";
+      div.style.border = "2px dashed #2B7FE8";
+
+      const { x, y } = obterPosicao(e);
+      const alvo = document
+        .elementsFromPoint(x, y)
+        .find((el) => el.classList.contains("foto-item") && el !== div);
+      if (alvo) {
+        const itens = [...grid.querySelectorAll(".foto-item")];
+        const indiceOrigem = itens.indexOf(div);
+        const indiceDestino = itens.indexOf(alvo);
+        if (indiceOrigem < indiceDestino) {
+          grid.insertBefore(div, alvo.nextSibling);
+        } else {
+          grid.insertBefore(div, alvo);
+        }
+      }
+    };
+
+    const finalizarPress = () => {
+      clearTimeout(pressTimer);
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("touchmove", onMove);
+
+      if (arrastando) {
+        div.style.opacity = "";
+        div.style.border = "";
+        salvarOrdemFotosPasta(nome);
+      } else if (segurando) {
+        mostrarBotaoRemover(div, nome, index);
+      }
+    };
 
     const iniciarPress = () => {
+      segurando = false;
+      arrastando = false;
       pressTimer = setTimeout(() => {
-        longPressAtivado = true;
-        mostrarBotaoRemover(div, nome, index);
+        segurando = true;
       }, 600);
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("touchmove", onMove, { passive: false });
+      document.addEventListener("mouseup", finalizarPress, { once: true });
+      document.addEventListener("touchend", finalizarPress, { once: true });
     };
-    const cancelarPress = () => clearTimeout(pressTimer);
+    const cancelarPressSeAindaNaoSegurando = () => {
+      if (!segurando) clearTimeout(pressTimer);
+    };
 
     div.addEventListener("touchstart", iniciarPress, { passive: true });
-    div.addEventListener("touchend", cancelarPress);
-    div.addEventListener("touchmove", cancelarPress);
     div.addEventListener("mousedown", iniciarPress);
-    div.addEventListener("mouseup", cancelarPress);
-    div.addEventListener("mouseleave", cancelarPress);
+    div.addEventListener("touchmove", cancelarPressSeAindaNaoSegurando);
 
     div.onclick = () => {
-      if (longPressAtivado) {
-        longPressAtivado = false;
+      if (segurando || arrastando) {
+        segurando = false;
+        arrastando = false;
         return;
       }
       abrirFotoDaPasta(index);
@@ -959,7 +1037,9 @@ function renderizarPastas() {
     const indicesFixos = pastasOverride[pasta.nome] || pasta.fotos || [];
     const pastaExtra = pastasExtras.find((p) => p.nome === pasta.nome);
     const indicesExtras = pastaExtra ? pastaExtra.fotos : [];
-    const todosIndices = [...new Set([...indicesFixos, ...indicesExtras])];
+    const todosIndices = ordenarIndicesFotos(pasta.nome, [
+      ...new Set([...indicesFixos, ...indicesExtras]),
+    ]);
 
     if (todosIndices.length > 0) {
       todosIndices.slice(0, 2).forEach((index) => {
