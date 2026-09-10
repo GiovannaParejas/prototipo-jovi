@@ -1094,6 +1094,8 @@ function renderizarPastas() {
   renderizarFotosSoltas(todasPastas, pastasExtras);
 }
 
+const CHAVE_ORDEM_SOLTAS = "__soltas__";
+
 function renderizarFotosSoltas(todasPastas, pastasExtras) {
   const gridSoltas = document.getElementById("grid-estudo-soltas");
   const tituloSoltas = document.getElementById("titulo-estudo-soltas");
@@ -1109,10 +1111,16 @@ function renderizarFotosSoltas(todasPastas, pastasExtras) {
     [...indicesFixos, ...indicesExtras].forEach((i) => indicesOcupados.add(i));
   });
 
-  const fotosSoltas = fotos.reduce((acc, foto, index) => {
-    if (foto.tipo === "estudo" && !indicesOcupados.has(index)) acc.push(index);
+  const removidas = JSON.parse(localStorage.getItem("fotos_estudo_removidas") || "[]");
+
+  const fotosSoltasBase = fotos.reduce((acc, foto, index) => {
+    if (foto.tipo === "estudo" && !indicesOcupados.has(index) && !removidas.includes(index)) {
+      acc.push(index);
+    }
     return acc;
   }, []);
+
+  const fotosSoltas = ordenarComOverride(CHAVE_ORDEM_SOLTAS, fotosSoltasBase);
 
   tituloSoltas?.classList.toggle("oculto", fotosSoltas.length === 0);
 
@@ -1120,10 +1128,148 @@ function renderizarFotosSoltas(todasPastas, pastasExtras) {
     const foto = fotos[index];
     const div = document.createElement("div");
     div.className = "foto-item";
-    div.onclick = () => abrirSeletorPastas(index);
+    div.dataset.index = index;
+    div.style.position = "relative";
     div.innerHTML = `<img src="${foto.src}" alt="${foto.titulo}">`;
+
+    const btnMenuFoto = document.createElement("button");
+    btnMenuFoto.style.cssText = `
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.6);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 5;
+    `;
+    btnMenuFoto.innerHTML =
+      '<span class="material-icons" style="font-size:16px; color:#FFF;">more_vert</span>';
+    btnMenuFoto.onclick = (e) => {
+      e.stopPropagation();
+      abrirMenuFotoSolta(index, btnMenuFoto);
+    };
+    div.appendChild(btnMenuFoto);
+
+    div.onclick = () => abrirFoto(index);
     gridSoltas.appendChild(div);
   });
+}
+
+function abrirMenuFotoSolta(index, btnRef) {
+  document.getElementById("menu-foto-pasta")?.remove();
+
+  const menu = document.createElement("div");
+  menu.id = "menu-foto-pasta";
+  menu.style.cssText = `
+    position: absolute;
+    background: #1A1A1A;
+    border: 1px solid #2B2B2B;
+    border-radius: 10px;
+    padding: 4px 0;
+    z-index: 100;
+    min-width: 170px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  `;
+
+  const celularRect = document
+    .querySelector(".celular")
+    .getBoundingClientRect();
+  const btnRect = btnRef.getBoundingClientRect();
+  menu.style.top = btnRect.bottom - celularRect.top + 4 + "px";
+  menu.style.right = celularRect.right - btnRect.right + "px";
+
+  const opcoes = [
+    {
+      label: "Mover para cima",
+      icon: "arrow_upward",
+      color: "#FFF",
+      action: () => moverFotoSolta(index, "cima"),
+    },
+    {
+      label: "Mover para baixo",
+      icon: "arrow_downward",
+      color: "#FFF",
+      action: () => moverFotoSolta(index, "baixo"),
+    },
+    {
+      label: "Adicionar a pasta",
+      icon: "create_new_folder",
+      color: "#FFF",
+      action: () => abrirSeletorPastas(index),
+    },
+    {
+      label: "Remover",
+      icon: "delete",
+      color: "#E84545",
+      action: () => removerFotoSolta(index),
+    },
+  ];
+
+  opcoes.forEach((op) => {
+    const btn = document.createElement("button");
+    btn.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      background: transparent;
+      border: none;
+      padding: 10px 14px;
+      color: ${op.color};
+      font-size: 13px;
+      cursor: pointer;
+      text-align: left;
+    `;
+    btn.innerHTML = `<span class="material-icons" style="font-size:16px; color:${op.color};">${op.icon}</span>${op.label}`;
+    btn.onclick = () => {
+      menu.remove();
+      op.action();
+    };
+    menu.appendChild(btn);
+  });
+
+  document.querySelector(".celular").appendChild(menu);
+
+  setTimeout(() => {
+    document.addEventListener("click", () => menu.remove(), { once: true });
+  }, 0);
+}
+
+function moverFotoSolta(index, direcao) {
+  const grid = document.getElementById("grid-estudo-soltas");
+  const ordemAtual = [...grid.querySelectorAll(".foto-item")].map((item) =>
+    Number(item.dataset.index),
+  );
+  const posicao = ordemAtual.indexOf(index);
+  const novaPosicao = direcao === "cima" ? posicao - 1 : posicao + 1;
+  if (novaPosicao < 0 || novaPosicao >= ordemAtual.length) return;
+
+  [ordemAtual[posicao], ordemAtual[novaPosicao]] = [
+    ordemAtual[novaPosicao],
+    ordemAtual[posicao],
+  ];
+
+  const ordensFotos = JSON.parse(localStorage.getItem("ordem_fotos_pastas") || "{}");
+  ordensFotos[CHAVE_ORDEM_SOLTAS] = ordemAtual;
+  localStorage.setItem("ordem_fotos_pastas", JSON.stringify(ordensFotos));
+
+  renderizarPastas();
+}
+
+function removerFotoSolta(index) {
+  const removidas = JSON.parse(localStorage.getItem("fotos_estudo_removidas") || "[]");
+  if (!removidas.includes(index)) {
+    removidas.push(index);
+    localStorage.setItem("fotos_estudo_removidas", JSON.stringify(removidas));
+  }
+  renderizarPastas();
+  mostrarAviso("Foto removida!");
 }
 
 function abrirSeletorPastas(indexFoto) {
