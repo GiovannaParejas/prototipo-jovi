@@ -486,6 +486,17 @@ function adicionarFotoNaPasta(nomePasta, index, overlay) {
   abrirPasta(nomePasta);     // ← reabre a pasta com a nova foto
   mostrarAviso('Foto adicionada!');
 }
+
+function ordenarPorRecencia(nome, indicesFixos, indicesExtras) {
+  const baseOriginal = pastas[nome] || [];
+  const adicionadas = [
+    ...indicesFixos.filter((i) => !baseOriginal.includes(i)),
+    ...indicesExtras,
+  ];
+  const originaisPresentes = baseOriginal.filter((i) => indicesFixos.includes(i));
+  return [...new Set([...[...adicionadas].reverse(), ...originaisPresentes])];
+}
+
 function abrirPasta(nome) {
   pastaAtual = nome;
   document.getElementById("pasta-titulo").textContent = nome;
@@ -503,7 +514,7 @@ function abrirPasta(nome) {
   const pastaExtra = pastasExtras.find((p) => p.nome === nome);
   const indicesFixos = pastasOverride[nome] || pastas[nome] || [];
   const indicesExtras = pastaExtra ? pastaExtra.fotos : [];
-  const todosIndices = [...new Set([...indicesFixos, ...indicesExtras])];
+  const todosIndices = ordenarPorRecencia(nome, indicesFixos, indicesExtras);
 
   todosIndices.forEach((index) => {
     const foto = fotos[index];
@@ -959,7 +970,7 @@ function renderizarPastas() {
     const indicesFixos = pastasOverride[pasta.nome] || pasta.fotos || [];
     const pastaExtra = pastasExtras.find((p) => p.nome === pasta.nome);
     const indicesExtras = pastaExtra ? pastaExtra.fotos : [];
-    const todosIndices = [...new Set([...indicesFixos, ...indicesExtras])];
+    const todosIndices = ordenarPorRecencia(pasta.nome, indicesFixos, indicesExtras);
 
     if (todosIndices.length > 0) {
       todosIndices.slice(0, 2).forEach((index) => {
