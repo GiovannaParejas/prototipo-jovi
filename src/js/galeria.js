@@ -57,15 +57,40 @@ setTimeout(() => {
 }, 0);
 let fotoAtual = null;
 
-const notaUrls = [
-  "nota-editor.html?titulo=Holiday at Sea&tag=Estudo&tagcor=azul&corpo=My wife and I had never considered a cruise holiday...",
-  "nota-editor.html?titulo=Férias no Mar&tag=Pessoal&tagcor=verde&corpo=Minha esposa e eu nunca tínhamos considerado...",
-  "nota-editor.html?titulo=Design Thinking - Process&tag=Rascunho&tagcor=amarelo&corpo=Nano Course – Design como ferramenta de inovação...",
-];
-
 const params = new URLSearchParams(window.location.search);
 const fotoParam = params.get("foto");
 if (fotoParam !== null) abrirFoto(parseInt(fotoParam));
+
+function renderizarAcoesFoto(index) {
+  const acoes = document.querySelector(".foto-acoes");
+  acoes.innerHTML = `
+    <button class="acao-btn" id="btn-esquerda">
+      <span class="material-icons">share</span>
+      <span>Compartilhar</span>
+    </button>
+    <button class="acao-btn" onclick="abrirPDF()">
+      <span class="material-icons">picture_as_pdf</span>
+      <span>PDF</span>
+    </button>
+    <button class="acao-btn" onclick="abrirAnotacoes()">
+      <span class="material-icons">bookmark</span>
+      <span>Anotações</span>
+    </button>
+    <button class="acao-btn" onclick="abrirResumo()">
+      <span class="material-icons">summarize</span>
+      <span>Resumo</span>
+    </button>
+    <button class="acao-btn" onclick="organizarComIA(${index})">
+      <span class="material-icons">auto_awesome</span>
+      <span>Organizar</span>
+    </button>
+    <button class="acao-btn">
+      <span class="material-icons">edit</span>
+      <span>Editar</span>
+    </button>
+  `;
+  aplicarBtnEsquerda(index);
+}
 
 function abrirFoto(index) {
   fotoAtual = index;
@@ -77,45 +102,7 @@ function abrirFoto(index) {
   fecharMenuAnotacoes();
   fecharGrifar();
   fecharPDF();
-
-  const acoes = document.querySelector(".foto-acoes");
-
-  if (foto.tipo === "pessoal") {
-    acoes.innerHTML = `
-      <button class="acao-btn">
-        <span class="material-icons">share</span>
-        <span>Compartilhar</span>
-      </button>
-      <button class="acao-btn">
-        <span class="material-icons">edit</span>
-        <span>Editar</span>
-      </button>
-    `;
-  } else {
-    acoes.innerHTML = `
-      <button class="acao-btn" id="btn-esquerda">
-        <span class="material-icons">share</span>
-        <span>Compartilhar</span>
-      </button>
-      <button class="acao-btn" onclick="abrirPDF()">
-        <span class="material-icons">picture_as_pdf</span>
-        <span>PDF</span>
-      </button>
-      <button class="acao-btn" onclick="abrirAnotacoes()">
-        <span class="material-icons">bookmark</span>
-        <span>Anotações</span>
-      </button>
-      <button class="acao-btn" onclick="abrirResumo()">
-        <span class="material-icons">summarize</span>
-        <span>Resumo</span>
-      </button>
-      <button class="acao-btn">
-        <span class="material-icons">edit</span>
-        <span>Editar</span>
-      </button>
-    `;
-    aplicarBtnEsquerda(index);
-  }
+  renderizarAcoesFoto(index);
 }
 function fecharFoto() {
   document.getElementById("tela-foto").classList.add("oculto");
@@ -165,31 +152,59 @@ function fecharMenuAnotacoes() {
   document.getElementById("menu-anotacoes").classList.add("oculto");
 }
 
-function abrirNota() {
-  const foto = fotos[fotoAtual];
-  const notaCompleta = notasCompletas[foto.nota];
-  sessionStorage.setItem("nota_titulo", notaCompleta.titulo);
-  sessionStorage.setItem("nota_corpo", notaCompleta.corpo);
-  window.location.href = "nota-editor.html";
+// --- IA: reconhecimento de conteúdo das fotos (mesma API/chave do Google usada na câmera) ---
+
+async function converterParaDataUrl(src) {
+  if (src.startsWith("data:")) return src;
+  const resposta = await fetch(src);
+  const blob = await resposta.blob();
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 }
 
-const notasCompletas = [
-  {
-    titulo: "Holiday at Sea",
-    corpo:
-      "My wife and I had never considered a cruise holiday because we have four children under fourteen and we didn't think a ship could offer the kind of facilities that kids enjoy. But we found we were wrong when we took a 9-day trip on the Caribbean Princess, a ship which can carry over three thousand passengers.||We travelled last August, and so the ship was nearly full although more people go in July. We boarded the boat in Florida and our destinations were the Bahamas, Jamaica, the Cayman Islands and Mexico, which are all beautiful places to visit.||On board, my children had special clubs to go to so they always had plenty to do with people of their own age, while my wife and I could relax knowing professionals were keeping an eye on them. The on-board facilities were fantastic, including great shops, a jogging track, basketball courts and a range of excellent restaurants.||I wanted to find out what was involved in running such a big ship so I went through doors I wasn't really supposed to open!||I would definitely recommend a cruise holiday to anyone but make sure you search for the best possible price.||You'll want to keep in touch with people back home while you are away but remember that most mobile phones don't work at sea.||Unless you run into unusually bad weather, it is unlikely you'll be seasick.",
-  },
-  {
-    titulo: "Férias no Mar (Tradução)",
-    corpo:
-      "Minha esposa e eu nunca tínhamos considerado fazer um cruzeiro, porque temos quatro filhos com menos de quatorze anos e achávamos que um navio não poderia oferecer o tipo de instalações que as crianças gostam. Mas descobrimos que estávamos errados quando fizemos uma viagem de 9 dias no Caribbean Princess.||A bordo, meus filhos tinham clubes especiais para frequentar, então sempre tinham bastante coisa para fazer com pessoas da mesma idade, enquanto minha esposa e eu podíamos relaxar sabendo que profissionais estavam cuidando deles.||Eu queria descobrir o que estava envolvido em operar um navio tão grande, então passei por portas que não deveria abrir!||Eu recomendaria definitivamente um cruzeiro a qualquer pessoa, mas certifique-se de procurar o melhor preço possível.||Você vai querer manter contato com as pessoas em casa enquanto estiver viajando, mas lembre-se de que a maioria dos celulares não funciona no mar.||A menos que você enfrente um clima incomumente ruim, é pouco provável que você fique enjoado.",
-  },
-  {
-    titulo: "Design Thinking - Process",
-    corpo:
-      "Nano Course - Design como ferramenta de inovação.||O que é design centrado no usuário? É a utilização da investigação e pesquisa para descobrir e compreender os problemas das pessoas que utilizam o serviço, explorando e compreendendo seu comportamento, necessidades, desejos, sonhos e desejos.||O que é inovação? Processo criativo e transformador que promove a ruptura de paradigmas, o mesmo que qual, impactando positivamente na qualidade de vida e no desenvolvimento humano.||Tipos de inovação: Incremental - pequenas melhorias ou atualizações. Disruptiva - uma tecnologia que é transformada ou substituída por uma inovação de qualidade superior.||E como inovar? Ela precisa ser desejada pelas pessoas. Precisa ser rentável e factível do ponto de vista do negócio. Precisa ser tecnicamente possível.",
-  },
-];
+async function extrairImagemBase64(src) {
+  const dataUrl = await converterParaDataUrl(src);
+  return dataUrl.split(",")[1];
+}
+
+function formatoImagemDoDataUrl(dataUrl) {
+  const match = dataUrl.match(/^data:image\/(\w+);/);
+  const tipo = match ? match[1].toLowerCase() : "png";
+  return tipo === "jpg" ? "JPEG" : tipo.toUpperCase();
+}
+
+async function reconhecerFotoComGemini(src, modo = "copiar", idioma = "português") {
+  const imageBase64 = await extrairImagemBase64(src);
+  const response = await fetch("https://prototipo-jovi.vercel.app/api/gemini", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ imageBase64, modo, idioma }),
+  });
+
+  const data = await response.json();
+  if (data.erro) throw new Error(data.erro);
+  return data.texto;
+}
+
+async function abrirNota() {
+  const foto = fotos[fotoAtual];
+  fecharMenuAnotacoes();
+  mostrarAviso("Lendo conteúdo da foto...");
+
+  try {
+    const texto = await reconhecerFotoComGemini(foto.src, "copiar");
+    sessionStorage.setItem("nota_titulo", foto.titulo);
+    sessionStorage.setItem("nota_corpo", texto);
+    window.location.href = "nota-editor.html";
+  } catch (err) {
+    console.error("Erro ao ler conteúdo da foto:", err);
+    mostrarAviso("Não foi possível ler o conteúdo da foto.");
+  }
+}
 
 function abrirGrifar() {
   fecharMenuAnotacoes();
@@ -332,31 +347,41 @@ function fecharPDF() {
   document.getElementById("menu-pdf").classList.add("oculto");
 }
 
-function abrirVisualizadorPDF(tipo) {
+let pdfTipoAtual = null;
+let pdfTextoAtual = null;
+
+async function abrirVisualizadorPDF(tipo) {
   fecharPDF();
   document.getElementById("tela-foto").classList.add("oculto");
   document.getElementById("tela-pdf").classList.remove("oculto");
   document.getElementById("pdf-titulo").textContent =
     tipo === "texto" ? "Texto em PDF" : "Foto em PDF";
 
-  const pdfPorFoto = {
-    0: {
-      foto: "../assets/DesignCadernoPDF.png",
-      texto: "../assets/designTextoPDF.png",
-    },
-    1: {
-      foto: "../assets/HolidayCadernoPDF.png",
-      texto: "../assets/holidayTextoPDF.png",
-    },
-    2: {
-      foto: "../assets/FeriasCadernoPDF.png",
-      texto: "../assets/FeriasTextoPDF.png",
-    },
-  };
+  pdfTipoAtual = tipo;
+  pdfTextoAtual = null;
 
-  const imagens = pdfPorFoto[fotoAtual];
-  document.getElementById("pdf-p1").src =
-    tipo === "foto" ? imagens.foto : imagens.texto;
+  const foto = fotos[fotoAtual];
+  const visualizacao = document.querySelector(".pdf-visualizacao");
+
+  if (tipo === "foto") {
+    visualizacao.innerHTML = `<div class="pdf-pagina"><img src="${foto.src}" alt="PDF"></div>`;
+    return;
+  }
+
+  visualizacao.innerHTML = `<p class="pdf-carregando">Lendo conteúdo da foto...</p>`;
+
+  try {
+    const texto = await reconhecerFotoComGemini(foto.src, "copiar");
+    pdfTextoAtual = texto;
+    const pagina = document.createElement("div");
+    pagina.className = "pdf-pagina pdf-pagina-texto";
+    pagina.textContent = texto;
+    visualizacao.innerHTML = "";
+    visualizacao.appendChild(pagina);
+  } catch (err) {
+    console.error("Erro ao extrair texto da foto:", err);
+    visualizacao.innerHTML = `<p class="pdf-carregando">Não foi possível ler o conteúdo da foto.</p>`;
+  }
 }
 
 function fecharVisualizadorPDF() {
@@ -364,21 +389,96 @@ function fecharVisualizadorPDF() {
   document.getElementById("tela-foto").classList.remove("oculto");
 }
 
-function abrirResumo() {
-  window.location.href = `ia.html?foto=${fotoAtual}`;
+async function baixarPDF() {
+  const foto = fotos[fotoAtual];
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  if (pdfTipoAtual === "foto") {
+    const dataUrl = await converterParaDataUrl(foto.src);
+    const formato = formatoImagemDoDataUrl(dataUrl);
+    const propriedades = doc.getImageProperties(dataUrl);
+    const largura = doc.internal.pageSize.getWidth() - 20;
+    const altura = (propriedades.height * largura) / propriedades.width;
+    doc.addImage(dataUrl, formato, 10, 10, largura, altura);
+  } else {
+    doc.setFontSize(12);
+    const linhas = doc.splitTextToSize(pdfTextoAtual || "", 180);
+    doc.text(linhas, 10, 15);
+  }
+
+  const nomeArquivo = `${foto.titulo.replace(/[^\w\s-]/g, "").trim() || "documento"}.pdf`;
+  doc.save(nomeArquivo);
+}
+
+async function abrirResumo() {
+  const foto = fotos[fotoAtual];
+  mostrarAviso("Lendo conteúdo da foto...");
+
+  try {
+    const texto = await reconhecerFotoComGemini(foto.src, "copiar");
+    sessionStorage.setItem("ia_foto_titulo", foto.titulo);
+    sessionStorage.setItem("ia_foto_texto", texto);
+    window.location.href = "ia.html?foto=1";
+  } catch (err) {
+    console.error("Erro ao ler conteúdo da foto:", err);
+    mostrarAviso("Não foi possível ler o conteúdo da foto.");
+  }
+}
+
+async function organizarComIA(index) {
+  const foto = fotos[index];
+  mostrarAviso("Analisando com IA...");
+
+  try {
+    const materiaBruta = await reconhecerFotoComGemini(foto.src, "materia");
+    const nomePasta = materiaBruta.trim().replace(/[.]+$/, "");
+    if (!nomePasta) throw new Error("A IA não identificou uma matéria.");
+
+    ["fotos_estudo_removidas", "fotos_pessoal_removidas"].forEach((chave) => {
+      const lista = JSON.parse(localStorage.getItem(chave) || "[]");
+      localStorage.setItem(chave, JSON.stringify(lista.filter((i) => i !== index)));
+    });
+
+    const pastasExcluidas = JSON.parse(localStorage.getItem("pastas_excluidas") || "[]");
+    const pastasFixasNomes = ["Software e Total Experience", "Inglês"].filter(
+      (n) => !pastasExcluidas.includes(n),
+    );
+    const pastasExtras = JSON.parse(localStorage.getItem("pastas_extras") || "[]");
+
+    const nomeFixoExistente = pastasFixasNomes.find(
+      (n) => n.toLowerCase() === nomePasta.toLowerCase(),
+    );
+    const pastaExtraExistente = pastasExtras.find(
+      (p) => p.nome.toLowerCase() === nomePasta.toLowerCase(),
+    );
+
+    let nomePastaFinal = nomePasta;
+    if (nomeFixoExistente) {
+      nomePastaFinal = nomeFixoExistente;
+    } else if (pastaExtraExistente) {
+      nomePastaFinal = pastaExtraExistente.nome;
+    } else {
+      pastasExtras.push({ nome: nomePasta, fotos: [] });
+      localStorage.setItem("pastas_extras", JSON.stringify(pastasExtras));
+    }
+
+    adicionarFotoNaPastaSilenciosa(nomePastaFinal, index);
+    renderizarPastas();
+    mostrarAviso(`Foto organizada em "${nomePastaFinal}"!`);
+  } catch (err) {
+    console.error("Erro ao organizar foto com IA:", err);
+    mostrarAviso("Não foi possível organizar a foto agora.");
+  }
 }
 
 function trocarTab(modo, el) {
   document.querySelectorAll(".tab").forEach((t) => t.classList.remove("ativo"));
   el.classList.add("ativo");
 
-  if (modo === "estudo") {
-    document.getElementById("view-estudo").classList.remove("oculto");
-    document.getElementById("view-pessoal").classList.add("oculto");
-  } else {
-    document.getElementById("view-pessoal").classList.remove("oculto");
-    document.getElementById("view-estudo").classList.add("oculto");
-  }
+  document.getElementById("view-estudo").classList.toggle("oculto", modo !== "estudo");
+  document.getElementById("view-pessoal").classList.toggle("oculto", modo !== "pessoal");
+  document.getElementById("view-lixeira")?.classList.toggle("oculto", modo !== "lixeira");
 }
 
 const pastas = {
@@ -447,7 +547,7 @@ function abrirSeletorFotos(nomePasta) {
   celular.appendChild(overlay);
 }
 
-function adicionarFotoNaPasta(nomePasta, index, overlay) {
+function adicionarFotoNaPastaSilenciosa(nomePasta, index) {
   const pastasExtras = JSON.parse(localStorage.getItem('pastas_extras') || '[]');
   const pastaIndex = pastasExtras.findIndex(p => p.nome === nomePasta);
 
@@ -466,6 +566,10 @@ function adicionarFotoNaPasta(nomePasta, index, overlay) {
     }
     localStorage.setItem('pastas_override', JSON.stringify(pastasOverride));
   }
+}
+
+function adicionarFotoNaPasta(nomePasta, index, overlay) {
+  adicionarFotoNaPastaSilenciosa(nomePasta, index);
 
   overlay.remove();
   renderizarPastas();        // ← atualiza o preview
@@ -720,48 +824,11 @@ function abrirFotoDaPasta(index) {
   fecharMenuAnotacoes();
   fecharGrifar();
   fecharPDF();
-
-  const acoes = document.querySelector(".foto-acoes");
-
-  if (foto.tipo === "pessoal") {
-    acoes.innerHTML = `
-      <button class="acao-btn">
-        <span class="material-icons">share</span>
-        <span>Compartilhar</span>
-      </button>
-      <button class="acao-btn">
-        <span class="material-icons">edit</span>
-        <span>Editar</span>
-      </button>
-    `;
-  } else {
-    acoes.innerHTML = `
-      <button class="acao-btn" id="btn-esquerda">
-        <span class="material-icons">share</span>
-        <span>Compartilhar</span>
-      </button>
-      <button class="acao-btn" onclick="abrirPDF()">
-        <span class="material-icons">picture_as_pdf</span>
-        <span>PDF</span>
-      </button>
-      <button class="acao-btn" onclick="abrirAnotacoes()">
-        <span class="material-icons">bookmark</span>
-        <span>Anotações</span>
-      </button>
-      <button class="acao-btn" onclick="abrirResumo()">
-        <span class="material-icons">summarize</span>
-        <span>Resumo</span>
-      </button>
-      <button class="acao-btn">
-        <span class="material-icons">edit</span>
-        <span>Editar</span>
-      </button>
-    `;
-    aplicarBtnEsquerda(index);
-  }
+  renderizarAcoesFoto(index);
 }
 
 function fecharPasta() {
+  pastaAtual = null;
   document.getElementById("tela-pasta").classList.add("oculto");
   document.getElementById("tela-galeria").classList.remove("oculto");
 }
@@ -1087,6 +1154,55 @@ function renderizarPastas() {
 
   renderizarFotosSoltas(todasPastas, pastasExtras);
   renderizarFotosPessoal(todasPastas, pastasExtras);
+  renderizarLixeira();
+}
+
+function renderizarLixeira() {
+  const grid = document.getElementById("grid-lixeira");
+  if (!grid) return;
+  grid.innerHTML = "";
+
+  const removidasEstudo = JSON.parse(localStorage.getItem("fotos_estudo_removidas") || "[]");
+  const removidasPessoal = JSON.parse(localStorage.getItem("fotos_pessoal_removidas") || "[]");
+  const indices = [...new Set([...removidasEstudo, ...removidasPessoal])];
+
+  document.getElementById("lixeira-vazia")?.classList.toggle("oculto", indices.length > 0);
+
+  indices.forEach((index) => {
+    const foto = fotos[index];
+    if (!foto) return;
+    const div = document.createElement("div");
+    div.className = "foto-item";
+    div.style.position = "relative";
+    div.innerHTML = `<img src="${foto.src}" alt="${foto.titulo}">`;
+
+    div.appendChild(
+      criarBotaoMenuFoto((btnRef) => abrirMenuFotoLixeira(index, btnRef)),
+    );
+
+    div.onclick = () => abrirFoto(index);
+    grid.appendChild(div);
+  });
+}
+
+function abrirMenuFotoLixeira(index, btnRef) {
+  abrirMenuAcoesFoto(btnRef, [
+    {
+      label: "Restaurar",
+      icon: "restore",
+      color: "#FFF",
+      action: () => restaurarFotoDaLixeira(index),
+    },
+  ]);
+}
+
+function restaurarFotoDaLixeira(index) {
+  ["fotos_estudo_removidas", "fotos_pessoal_removidas"].forEach((chave) => {
+    const lista = JSON.parse(localStorage.getItem(chave) || "[]");
+    localStorage.setItem(chave, JSON.stringify(lista.filter((i) => i !== index)));
+  });
+  renderizarPastas();
+  mostrarAviso("Foto restaurada!");
 }
 
 const CHAVE_ORDEM_SOLTAS = "__soltas__";

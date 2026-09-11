@@ -11,6 +11,8 @@ const { imageBase64, modo, idioma = 'português' } = req.body;
 
 const prompt = modo === 'traduzir'
   ? `Extraia e traduza para ${idioma} todo o texto visível nesta imagem. Retorne apenas o texto traduzido, sem explicações.`
+  : modo === 'materia'
+  ? 'Analise o conteúdo desta imagem e identifique a matéria ou categoria de estudo mais adequada para organizá-la (ex: Matemática, História, Biologia, Inglês, Português, Química, Física, Geografia, Design, Programação). Responda apenas com o nome da matéria, em uma ou duas palavras, sem explicações nem pontuação.'
   : 'Extraia todo o texto visível nesta imagem. Retorne apenas o texto puro, sem formatação, sem JSON, sem explicações.';
 
   const response = await fetch(
