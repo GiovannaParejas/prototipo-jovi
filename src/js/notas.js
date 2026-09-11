@@ -82,6 +82,24 @@ function obterNotasFixasComOverrides() {
   });
 }
 
+function obterNotasExtras() {
+  const notasExtras = JSON.parse(localStorage.getItem("notas_extras") || "[]");
+  let precisaSalvar = false;
+
+  notasExtras.forEach((nota) => {
+    if (!nota.id) {
+      nota.id = `extra-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      precisaSalvar = true;
+    }
+  });
+
+  if (precisaSalvar) {
+    localStorage.setItem("notas_extras", JSON.stringify(notasExtras));
+  }
+
+  return notasExtras;
+}
+
 let filtroNotaAtivo = "todas";
 
 function selecionarFiltroNota(tipo) {
@@ -101,7 +119,7 @@ function renderizarNotas() {
   if (!lista) return;
   lista.innerHTML = "";
 
-  const notasExtras = JSON.parse(localStorage.getItem("notas_extras") || "[]");
+  const notasExtras = obterNotasExtras();
   const todasNotas = [...notasExtras, ...obterNotasFixasComOverrides()];
 
   const notasFiltradas =
@@ -238,7 +256,7 @@ function abrirCriarNota() {
     const tipoSelecionado = selectTipo.value || "rascunho";
     const { tag, tagcor } = MAPA_TIPO_NOTA[tipoSelecionado];
 
-    const notasExtras = JSON.parse(localStorage.getItem("notas_extras") || "[]");
+    const notasExtras = obterNotasExtras();
     notasExtras.unshift({
       id: `extra-${Date.now()}`,
       titulo: tituloDigitado,
