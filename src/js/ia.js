@@ -31,13 +31,73 @@ O autor recomenda cruzeiros e orienta buscar os melhores preços. Lembra que cel
 let historicoConversa = [];
 let contextoConversa = null;
 
+function escaparHtml(texto) {
+  const div = document.createElement("div");
+  div.textContent = texto;
+  return div.innerHTML;
+}
+
+function formatarMarkdown(texto) {
+  let html = escaparHtml(texto);
+
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "<em>$1</em>");
+  html = html.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g, "<em>$1</em>");
+  html = html.replace(/`(.+?)`/g, "<code>$1</code>");
+  html = html.replace(/^\s*---+\s*$/gm, "<hr>");
+  html = html.replace(/^#{1,6}\s+(.+)$/gm, "<strong>$1</strong>");
+
+  const linhas = html.split("\n");
+  const resultado = [];
+  let dentroLista = null;
+
+  linhas.forEach((linha) => {
+    const itemUl = linha.match(/^\s*[-*]\s+(.+)$/);
+    const itemOl = linha.match(/^\s*\d+\.\s+(.+)$/);
+
+    if (itemUl) {
+      if (dentroLista !== "ul") {
+        if (dentroLista) resultado.push(`</${dentroLista}>`);
+        resultado.push("<ul>");
+        dentroLista = "ul";
+      }
+      resultado.push(`<li>${itemUl[1]}</li>`);
+    } else if (itemOl) {
+      if (dentroLista !== "ol") {
+        if (dentroLista) resultado.push(`</${dentroLista}>`);
+        resultado.push("<ol>");
+        dentroLista = "ol";
+      }
+      resultado.push(`<li>${itemOl[1]}</li>`);
+    } else {
+      if (dentroLista) {
+        resultado.push(`</${dentroLista}>`);
+        dentroLista = null;
+      }
+      const linhaAparada = linha.trim();
+      if (linhaAparada === "<hr>") {
+        resultado.push("<hr>");
+      } else if (linhaAparada) {
+        resultado.push(`<p>${linha}</p>`);
+      }
+    }
+  });
+  if (dentroLista) resultado.push(`</${dentroLista}>`);
+
+  return resultado.join("");
+}
+
 function criarBolhaMensagem(autor, texto) {
   const wrapper = document.createElement("div");
   wrapper.className = `msg-wrapper ${autor}`;
 
   const bolha = document.createElement("div");
   bolha.className = `msg ${autor}`;
-  bolha.textContent = texto;
+  if (autor === "ia") {
+    bolha.innerHTML = formatarMarkdown(texto);
+  } else {
+    bolha.textContent = texto;
+  }
 
   wrapper.appendChild(bolha);
   return wrapper;
