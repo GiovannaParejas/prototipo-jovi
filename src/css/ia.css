@@ -234,6 +234,48 @@ body {
     color: var(--cor-branco);
 }
 
+.msg.ia p {
+    margin: 0 0 8px;
+}
+
+.msg.ia p:last-child {
+    margin-bottom: 0;
+}
+
+.msg.ia ul,
+.msg.ia ol {
+    margin: 4px 0 8px;
+    padding-left: 18px;
+}
+
+.msg.ia ul:last-child,
+.msg.ia ol:last-child {
+    margin-bottom: 0;
+}
+
+.msg.ia li {
+    margin-bottom: 4px;
+}
+
+.msg.ia hr {
+    border: none;
+    border-top: 1px solid var(--cor-cinza-borda);
+    margin: 10px 0;
+}
+
+.msg.ia code {
+    background: rgba(255, 255, 255, 0.08);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+}
+
+.msg.ia strong {
+    color: var(--cor-branco);
+    font-weight: 700;
+}
+
 .msg-destaque {
     color: var(--cor-amarelo);
     font-weight: 600;
