@@ -183,6 +183,7 @@ body {
     overflow: hidden;
     text-decoration: none;
     display: block;
+    flex-shrink: 0;
 }
 
 .nota-card:hover {
