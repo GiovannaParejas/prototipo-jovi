@@ -32,6 +32,7 @@ body {
 }
 
 .celular {
+    position: relative;
     width: 100%;
     height: 100dvh;
     background: var(--background-celular);
@@ -66,7 +67,7 @@ body {
 }
 
 .btn-voltar,
-.btn-opcoes {
+.btn-salvar {
     background: transparent;
     border: none;
     cursor: pointer;
@@ -81,15 +82,19 @@ body {
 }
 
 .btn-voltar:hover,
-.btn-opcoes:hover {
+.btn-salvar:hover {
     background: var(--background-cor-cinza);
     color: var(--cor-texto-claro);
 }
 
 .btn-voltar .material-icons,
-.btn-opcoes .material-icons {
+.btn-salvar .material-icons {
     font-size: 20px;
     color: var(--cor-branco);
+}
+
+.oculto {
+    display: none !important;
 }
 
 .header-titulo {
@@ -115,6 +120,39 @@ body {
 
 .editor-area::-webkit-scrollbar {
     display: none;
+}
+
+.nota-meta-editor {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nota-data {
+    font-size: 11px;
+    color: var(--cor-texto-fraco);
+}
+
+.nota-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.nota-tag.azul {
+    background: #415FFF22;
+    color: #415FFF;
+}
+
+.nota-tag.verde {
+    background: #4CAF8222;
+    color: #4CAF82;
+}
+
+.nota-tag.amarelo {
+    background: #F5C54222;
+    color: #F5C542;
 }
 
 .nota-titulo-edit {
