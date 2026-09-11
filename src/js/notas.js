@@ -57,7 +57,6 @@ const MAPA_TIPO_NOTA = {
   rascunho: { tag: "Rascunho", tagcor: "amarelo" },
 };
 
-const CHAVE_SOLTAS_ESTUDO = "__soltas_estudo__";
 let pastaNotaAtual = null;
 
 // --- Pastas de notas ---
@@ -70,9 +69,18 @@ function salvarPastasNotas(pastas) {
   localStorage.setItem("notas_pastas", JSON.stringify(pastas));
 }
 
-function criarPastaNotaObj(nome) {
+function tipoDaPasta(pasta) {
+  return pasta.tipo || "estudo";
+}
+
+function tipoDaTagNota(tag) {
+  const entrada = Object.entries(MAPA_TIPO_NOTA).find(([, v]) => v.tag === tag);
+  return entrada ? entrada[0] : null;
+}
+
+function criarPastaNotaObj(nome, tipo) {
   const pastas = obterPastasNotas();
-  pastas.push({ id: `pasta-${Date.now()}`, nome });
+  pastas.push({ id: `pasta-${Date.now()}`, nome, tipo: tipo || "estudo" });
   salvarPastasNotas(pastas);
 }
 
@@ -120,17 +128,23 @@ function excluirNota(nota) {
   }
 }
 
-// --- Ordenação das notas de Estudo (dentro de pastas ou soltas) ---
+// --- Ordenação genérica (notas soltas, notas dentro de pastas, e as próprias pastas) ---
 
-function obterNotasOrdem() {
+function obterOrdens() {
   return JSON.parse(localStorage.getItem("notas_ordem") || "{}");
 }
 
-function ordenarNotasComOverride(chave, notas) {
-  const ordemSalva = obterNotasOrdem()[chave];
-  if (!ordemSalva || ordemSalva.length === 0) return notas;
+function salvarOrdem(chave, ids) {
+  const ordens = obterOrdens();
+  ordens[chave] = ids;
+  localStorage.setItem("notas_ordem", JSON.stringify(ordens));
+}
 
-  const porId = new Map(notas.map((n) => [n.id, n]));
+function ordenarPorChave(chave, itens) {
+  const ordemSalva = obterOrdens()[chave];
+  if (!ordemSalva || ordemSalva.length === 0) return itens;
+
+  const porId = new Map(itens.map((i) => [i.id, i]));
   const existentes = [];
   ordemSalva.forEach((id) => {
     if (porId.has(id)) {
@@ -138,37 +152,57 @@ function ordenarNotasComOverride(chave, notas) {
       porId.delete(id);
     }
   });
-  // notas novas (fora da ordem salva) entram no topo
+  // itens novos (fora da ordem salva) entram no topo
   return [...porId.values(), ...existentes];
 }
 
-function obterNotasEstudoTodasComPasta() {
-  const extras = obterNotasExtras();
-  const fixas = obterNotasFixasComOverrides();
-  return [...extras, ...fixas].filter((n) => n.tag === "Estudo");
-}
-
-function obterNotasDoGrupoEstudo(chave) {
-  const todas = obterNotasEstudoTodasComPasta();
-  const doGrupo =
-    chave === CHAVE_SOLTAS_ESTUDO
-      ? todas.filter((n) => !n.pastaId)
-      : todas.filter((n) => n.pastaId === chave);
-  return ordenarNotasComOverride(chave, doGrupo);
-}
-
-function moverNotaEstudo(nota, direcao, chaveGrupo) {
-  const notasDoGrupo = obterNotasDoGrupoEstudo(chaveGrupo);
-  const ids = notasDoGrupo.map((n) => n.id);
-  const posicao = ids.indexOf(nota.id);
+function moverComOrdem(chave, itensDoGrupo, id, direcao) {
+  const ids = itensDoGrupo.map((i) => i.id);
+  const posicao = ids.indexOf(id);
   const novaPosicao = direcao === "cima" ? posicao - 1 : posicao + 1;
-  if (novaPosicao < 0 || novaPosicao >= ids.length) return;
+  if (posicao === -1 || novaPosicao < 0 || novaPosicao >= ids.length) return;
 
   [ids[posicao], ids[novaPosicao]] = [ids[novaPosicao], ids[posicao]];
+  salvarOrdem(chave, ids);
+}
 
-  const ordens = obterNotasOrdem();
-  ordens[chaveGrupo] = ids;
-  localStorage.setItem("notas_ordem", JSON.stringify(ordens));
+function chaveSoltas(filtro) {
+  return `__soltas_${filtro}__`;
+}
+
+function chavePastas(filtro) {
+  return `__pastas_${filtro}__`;
+}
+
+function obterTodasNotas() {
+  return [...obterNotasExtras(), ...obterNotasFixasComOverrides()];
+}
+
+function obterNotasPorFiltro(filtro) {
+  const todas = obterTodasNotas();
+  if (filtro === "todas") return todas;
+  const tagAlvo = MAPA_TIPO_NOTA[filtro] ? MAPA_TIPO_NOTA[filtro].tag : null;
+  return todas.filter((n) => n.tag === tagAlvo);
+}
+
+function obterPastasPorFiltro(filtro) {
+  const pastas = obterPastasNotas();
+  if (filtro === "todas") return pastas;
+  return pastas.filter((p) => tipoDaPasta(p) === filtro);
+}
+
+function obterPastasOrdenadasPorFiltro(filtro) {
+  return ordenarPorChave(chavePastas(filtro), obterPastasPorFiltro(filtro));
+}
+
+function obterNotasSoltasPorFiltro(filtro) {
+  const soltas = obterNotasPorFiltro(filtro).filter((n) => !n.pastaId);
+  return ordenarPorChave(chaveSoltas(filtro), soltas);
+}
+
+function obterNotasDaPasta(pastaId) {
+  const notas = obterTodasNotas().filter((n) => n.pastaId === pastaId);
+  return ordenarPorChave(pastaId, notas);
 }
 
 function formatarDataAtual() {
@@ -319,41 +353,43 @@ function abrirMenuAcoesNota(btnRef, opcoes) {
 
 function abrirMenuNota(nota, btnRef, contexto) {
   const opcoes = [];
-  const ehEstudo = nota.tag === "Estudo";
-  const chaveGrupo = contexto === "pasta" ? pastaNotaAtual : CHAVE_SOLTAS_ESTUDO;
 
-  if (ehEstudo && (contexto === "solta" || contexto === "pasta")) {
+  if (contexto === "solta" || contexto === "pasta") {
+    const chave = contexto === "pasta" ? pastaNotaAtual : chaveSoltas(filtroNotaAtivo);
+    const itensDoGrupo =
+      contexto === "pasta"
+        ? obterNotasDaPasta(pastaNotaAtual)
+        : obterNotasSoltasPorFiltro(filtroNotaAtivo);
+
     opcoes.push({
       label: "Mover para cima",
       aoClicar: () => {
-        moverNotaEstudo(nota, "cima", chaveGrupo);
+        moverComOrdem(chave, itensDoGrupo, nota.id, "cima");
         contexto === "pasta" ? renderizarPastaNotas() : renderizarNotas();
       },
     });
     opcoes.push({
       label: "Mover para baixo",
       aoClicar: () => {
-        moverNotaEstudo(nota, "baixo", chaveGrupo);
+        moverComOrdem(chave, itensDoGrupo, nota.id, "baixo");
         contexto === "pasta" ? renderizarPastaNotas() : renderizarNotas();
       },
     });
   }
 
-  if (ehEstudo) {
-    if (nota.pastaId) {
-      opcoes.push({
-        label: "Remover da pasta",
-        aoClicar: () => {
-          definirPastaDaNota(nota, null);
-          contexto === "pasta" ? renderizarPastaNotas() : renderizarNotas();
-        },
-      });
-    } else {
-      opcoes.push({
-        label: "Adicionar a pasta",
-        aoClicar: () => abrirSeletorPastaNota(nota),
-      });
-    }
+  if (nota.pastaId) {
+    opcoes.push({
+      label: "Remover da pasta",
+      aoClicar: () => {
+        definirPastaDaNota(nota, null);
+        contexto === "pasta" ? renderizarPastaNotas() : renderizarNotas();
+      },
+    });
+  } else {
+    opcoes.push({
+      label: "Adicionar a pasta",
+      aoClicar: () => abrirSeletorPastaNota(nota),
+    });
   }
 
   opcoes.push({
@@ -370,7 +406,24 @@ function abrirMenuNota(nota, btnRef, contexto) {
 }
 
 function abrirMenuPastaNota(pasta, btnRef) {
+  const chave = chavePastas(filtroNotaAtivo);
+  const pastasDoGrupo = obterPastasOrdenadasPorFiltro(filtroNotaAtivo);
+
   const opcoes = [
+    {
+      label: "Mover para cima",
+      aoClicar: () => {
+        moverComOrdem(chave, pastasDoGrupo, pasta.id, "cima");
+        renderizarNotas();
+      },
+    },
+    {
+      label: "Mover para baixo",
+      aoClicar: () => {
+        moverComOrdem(chave, pastasDoGrupo, pasta.id, "baixo");
+        renderizarNotas();
+      },
+    },
     {
       label: "Renomear",
       aoClicar: () => renomearPastaNotaPrompt(pasta),
@@ -426,7 +479,8 @@ function abrirSeletorPastaNota(nota) {
   titulo.style.cssText = `color:#FFF; font-size:14px; font-weight:600; margin:0;`;
   modal.appendChild(titulo);
 
-  const pastas = obterPastasNotas();
+  const tipoNota = tipoDaTagNota(nota.tag) || "estudo";
+  const pastas = obterPastasNotas().filter((p) => tipoDaPasta(p) === tipoNota);
 
   if (pastas.length === 0) {
     const vazio = document.createElement("p");
@@ -465,6 +519,10 @@ function abrirSeletorPastaNota(nota) {
 
 function abrirSeletorNotasSoltasParaPasta() {
   if (pastaNotaAtual === null) return;
+  const pastaAtual = obterPastasNotas().find((p) => p.id === pastaNotaAtual);
+  if (!pastaAtual) return;
+  const tipoAlvo = tipoDaPasta(pastaAtual);
+
   const celular = document.querySelector(".celular");
   celular.style.position = "relative";
 
@@ -488,11 +546,12 @@ function abrirSeletorNotasSoltasParaPasta() {
   titulo.style.cssText = `color:#FFF; font-size:14px; font-weight:600; margin:0;`;
   modal.appendChild(titulo);
 
-  const soltas = obterNotasEstudoTodasComPasta().filter((n) => !n.pastaId);
+  const soltas = obterNotasSoltasPorFiltro(tipoAlvo);
+  const infoTipo = MAPA_TIPO_NOTA[tipoAlvo];
 
   if (soltas.length === 0) {
     const vazio = document.createElement("p");
-    vazio.textContent = "Nenhuma nota solta de Estudo.";
+    vazio.textContent = `Nenhuma nota solta de ${infoTipo ? infoTipo.tag : tipoAlvo}.`;
     vazio.style.cssText = `color:#666; font-size:12.5px; margin:0;`;
     modal.appendChild(vazio);
   }
@@ -560,11 +619,16 @@ function criarCardPasta(pasta, notasDaPasta) {
   card.className = "pasta-nota-card";
   card.onclick = () => abrirPastaNotas(pasta.id);
 
+  const infoTipo = MAPA_TIPO_NOTA[tipoDaPasta(pasta)] || MAPA_TIPO_NOTA.estudo;
+
   card.innerHTML = `
     <span class="material-icons icone-pasta">folder</span>
     <div class="pasta-nota-info">
       <div class="pasta-nota-nome">${pasta.nome}</div>
-      <div class="pasta-nota-contagem">${notasDaPasta.length} nota${notasDaPasta.length === 1 ? "" : "s"}</div>
+      <div class="pasta-nota-contagem">
+        ${notasDaPasta.length} nota${notasDaPasta.length === 1 ? "" : "s"}
+        <span class="nota-tag ${infoTipo.tagcor}" style="margin-left:6px;">${infoTipo.tag}</span>
+      </div>
     </div>
   `;
 
@@ -609,7 +673,7 @@ function renderizarPastaNotas() {
   if (!lista || pastaNotaAtual === null) return;
   lista.innerHTML = "";
 
-  const notas = obterNotasDoGrupoEstudo(pastaNotaAtual);
+  const notas = obterNotasDaPasta(pastaNotaAtual);
 
   if (notas.length === 0) {
     const vazio = document.createElement("p");
@@ -626,16 +690,17 @@ function renderizarPastaNotas() {
 
 // --- Lista principal de notas ---
 
-function renderizarNotasAgrupadasPorPasta(lista, todasNotas) {
-  const notasEstudo = todasNotas.filter((n) => n.tag === "Estudo");
-  const pastas = obterPastasNotas();
+function renderizarNotasAgrupadasPorPasta(lista, filtro) {
+  const pastas = obterPastasOrdenadasPorFiltro(filtro);
+  const soltas = obterNotasSoltasPorFiltro(filtro);
+  const totalNotas = obterNotasPorFiltro(filtro).length;
 
   const contador = document.getElementById("contador-notas");
   if (contador) {
-    contador.textContent = `${notasEstudo.length} nota${notasEstudo.length === 1 ? "" : "s"}`;
+    contador.textContent = `${totalNotas} nota${totalNotas === 1 ? "" : "s"}`;
   }
 
-  if (notasEstudo.length === 0 && pastas.length === 0) {
+  if (totalNotas === 0 && pastas.length === 0) {
     const vazio = document.createElement("p");
     vazio.style.cssText = `color:#555; font-size:13px; text-align:center; padding:24px 0;`;
     vazio.textContent = "Nenhuma nota encontrada.";
@@ -644,14 +709,9 @@ function renderizarNotasAgrupadasPorPasta(lista, todasNotas) {
   }
 
   pastas.forEach((pasta) => {
-    const notasDaPasta = notasEstudo.filter((n) => n.pastaId === pasta.id);
+    const notasDaPasta = obterNotasDaPasta(pasta.id);
     lista.appendChild(criarCardPasta(pasta, notasDaPasta));
   });
-
-  const soltas = ordenarNotasComOverride(
-    CHAVE_SOLTAS_ESTUDO,
-    notasEstudo.filter((n) => !n.pastaId),
-  );
 
   if (soltas.length > 0) {
     if (pastas.length > 0) {
@@ -671,20 +731,17 @@ function renderizarNotas() {
   if (!lista) return;
   lista.innerHTML = "";
 
-  const notasExtras = obterNotasExtras();
-  const todasNotas = [...notasExtras, ...obterNotasFixasComOverrides()];
-
-  if (filtroNotaAtivo === "estudo" && !buscaNotaAtiva) {
-    renderizarNotasAgrupadasPorPasta(lista, todasNotas);
+  if (!buscaNotaAtiva) {
+    renderizarNotasAgrupadasPorPasta(lista, filtroNotaAtivo);
     return;
   }
 
+  const todasNotas = obterTodasNotas();
   const notasFiltradas = todasNotas
     .filter(
       (nota) => filtroNotaAtivo === "todas" || nota.tag.toLowerCase() === filtroNotaAtivo,
     )
     .filter((nota) => {
-      if (!buscaNotaAtiva) return true;
       const corpoTexto = nota.corpo.replace(/<[^>]+>/g, "");
       const alvo = normalizarTexto(`${nota.titulo} ${corpoTexto}`);
       return alvo.includes(buscaNotaAtiva);
@@ -879,6 +936,32 @@ function abrirCriarPastaNota() {
     padding:10px 14px; color:#FFF; font-size:13px; outline:none;
   `;
 
+  const labelTipo = document.createElement("p");
+  labelTipo.textContent = "Tipo";
+  labelTipo.style.cssText = `color:#AAA; font-size:12px; margin:0;`;
+
+  const selectTipo = document.createElement("select");
+  selectTipo.style.cssText = `
+    background:#141414; border:1px solid #2A2A2A; border-radius:10px;
+    padding:10px 14px; color:#FFF; font-size:13px; outline:none;
+  `;
+  [
+    { label: "Estudo", value: "estudo" },
+    { label: "Pessoal", value: "pessoal" },
+    { label: "Rascunho", value: "rascunho" },
+  ].forEach((op) => {
+    const option = document.createElement("option");
+    option.value = op.value;
+    option.textContent = op.label;
+    selectTipo.appendChild(option);
+  });
+  selectTipo.value = "estudo";
+
+  const grupoTipo = document.createElement("div");
+  grupoTipo.style.cssText = `display:flex; flex-direction:column; gap:6px;`;
+  grupoTipo.appendChild(labelTipo);
+  grupoTipo.appendChild(selectTipo);
+
   const botoes = document.createElement("div");
   botoes.style.cssText = `display:flex; gap:8px; justify-content:flex-end;`;
 
@@ -899,7 +982,7 @@ function abrirCriarPastaNota() {
   btnCriar.onclick = () => {
     const nome = inputNome.value.trim();
     if (!nome) return;
-    criarPastaNotaObj(nome);
+    criarPastaNotaObj(nome, selectTipo.value || "estudo");
     overlay.remove();
     renderizarNotas();
   };
@@ -909,6 +992,7 @@ function abrirCriarPastaNota() {
 
   modal.appendChild(titulo);
   modal.appendChild(inputNome);
+  modal.appendChild(grupoTipo);
   modal.appendChild(botoes);
   overlay.appendChild(modal);
   celular.appendChild(overlay);
