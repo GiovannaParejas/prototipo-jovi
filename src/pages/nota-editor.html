@@ -31,12 +31,17 @@
                 <span class="material-icons">arrow_back</span>
             </button>
             <span class="header-titulo">Resumo — Fotossíntese</span>
-            <button class="btn-opcoes">
-                <span class="material-icons">more_vert</span>
+            <button class="btn-salvar oculto" id="btn-salvar-nota" onclick="salvarNota()">
+                <span class="material-icons">save</span>
             </button>
         </div>
 
         <main class="editor-area">
+            <div class="nota-meta-editor oculto" id="nota-meta-editor">
+                <span class="nota-data" id="nota-data-editor"></span>
+                <span class="nota-tag" id="nota-tag-editor"></span>
+            </div>
+
             <div class="nota-titulo-edit" contenteditable="true" data-placeholder="Título"></div>
 
             <div class="nota-corpo" contenteditable="true" data-placeholder="Comece a escrever..."></div>

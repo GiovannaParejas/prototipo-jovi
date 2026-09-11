@@ -1,5 +1,6 @@
 const notasFixas = [
   {
+    id: "fixa-0",
     titulo: "Holiday at Sea",
     corpo:
       "My wife and I had never considered a cruise holiday because we have four children under fourteen and we didn't think a ship could offer the kind of facilities that kids enjoy. But we found we were wrong when we took a 9-day trip on the Caribbean Princess, a ship which can carry over three thousand passengers.||We travelled last August, and so the ship was nearly full although more people go in July. We boarded the boat in Florida and our destinations were the Bahamas, Jamaica, the Cayman Islands and Mexico, which are all beautiful places to visit.||On board, my children had special clubs to go to so they always had plenty to do with people of their own age, while my wife and I could relax knowing professionals were keeping an eye on them. The on-board facilities were fantastic, including great shops, a jogging track, basketball courts and a range of excellent restaurants.||I wanted to find out what was involved in running such a big ship so I went through doors I wasn't really supposed to open!||I would definitely recommend a cruise holiday to anyone but make sure you search for the best possible price.||You'll want to keep in touch with people back home while you are away but remember that most mobile phones don't work at sea.||Unless you run into unusually bad weather, it is unlikely you'll be seasick.",
@@ -8,6 +9,7 @@ const notasFixas = [
     data: "Hoje, 09:12",
   },
   {
+    id: "fixa-1",
     titulo: "Férias no Mar (Tradução)",
     corpo:
       "Minha esposa e eu nunca tínhamos considerado fazer um cruzeiro, porque temos quatro filhos com menos de quatorze anos e achávamos que um navio não poderia oferecer o tipo de instalações que as crianças gostam. Mas descobrimos que estávamos errados quando fizemos uma viagem de 9 dias no Caribbean Princess.||A bordo, meus filhos tinham clubes especiais para frequentar, então sempre tinham bastante coisa para fazer com pessoas da mesma idade, enquanto minha esposa e eu podíamos relaxar sabendo que profissionais estavam cuidando deles.||Eu queria descobrir o que estava envolvido em operar um navio tão grande, então passei por portas que não deveria abrir!||Eu recomendaria definitivamente um cruzeiro a qualquer pessoa, mas certifique-se de procurar o melhor preço possível.||Você vai querer manter contato com as pessoas em casa enquanto estiver viajando, mas lembre-se de que a maioria dos celulares não funciona no mar.||A menos que você enfrente um clima incomumente ruim, é pouco provável que você fique enjoado.",
@@ -16,6 +18,7 @@ const notasFixas = [
     data: "Ontem, 21:45",
   },
   {
+    id: "fixa-2",
     titulo: "Design Thinking - Process (Texto)",
     corpo:
       "Nano Course - Design como ferramenta de inovação.||O que é design centrado no usuário? É a utilização da investigação e pesquisa para descobrir e compreender os problemas das pessoas que utilizam o serviço, explorando e compreendendo seu comportamento, necessidades, desejos, sonhos e desejos.||O que é inovação? Processo criativo e transformador que promove a ruptura de paradigmas, o mesmo que qual, impactando positivamente na qualidade de vida e no desenvolvimento humano.||Tipos de inovação: Incremental - pequenas melhorias ou atualizações. Disruptiva - uma tecnologia que é transformada ou substituída por uma inovação de qualidade superior.||E como inovar? Ela precisa ser desejada pelas pessoas. Precisa ser rentável e factível do ponto de vista do negócio. Precisa ser tecnicamente possível.",
@@ -24,6 +27,7 @@ const notasFixas = [
     data: "03/05, 14:30",
   },
   {
+    id: "fixa-3",
     titulo: "Fórmula de Bhaskara",
     corpo:
       "Equações do 2º grau — ax² + bx + c = 0" +
@@ -61,9 +65,21 @@ function formatarDataAtual() {
 }
 
 function abrirNotaNoEditor(nota) {
+  sessionStorage.setItem("nota_id", nota.id);
   sessionStorage.setItem("nota_titulo", nota.titulo);
   sessionStorage.setItem("nota_corpo", nota.corpo);
+  sessionStorage.setItem("nota_tag", nota.tag);
+  sessionStorage.setItem("nota_tagcor", nota.tagcor);
+  sessionStorage.setItem("nota_data", nota.data);
   window.location.href = "nota-editor.html";
+}
+
+function obterNotasFixasComOverrides() {
+  const overrides = JSON.parse(localStorage.getItem("notas_override") || "{}");
+  return notasFixas.map((nota) => {
+    const over = overrides[nota.id];
+    return over ? { ...nota, ...over } : nota;
+  });
 }
 
 let filtroNotaAtivo = "todas";
@@ -86,7 +102,7 @@ function renderizarNotas() {
   lista.innerHTML = "";
 
   const notasExtras = JSON.parse(localStorage.getItem("notas_extras") || "[]");
-  const todasNotas = [...notasExtras, ...notasFixas];
+  const todasNotas = [...notasExtras, ...obterNotasFixasComOverrides()];
 
   const notasFiltradas =
     filtroNotaAtivo === "todas"
@@ -224,6 +240,7 @@ function abrirCriarNota() {
 
     const notasExtras = JSON.parse(localStorage.getItem("notas_extras") || "[]");
     notasExtras.unshift({
+      id: `extra-${Date.now()}`,
       titulo: tituloDigitado,
       corpo: textareaCorpo.value.trim() || "Nota vazia.",
       tag,
