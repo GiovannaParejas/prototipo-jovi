@@ -57,6 +57,120 @@ const MAPA_TIPO_NOTA = {
   rascunho: { tag: "Rascunho", tagcor: "amarelo" },
 };
 
+const CHAVE_SOLTAS_ESTUDO = "__soltas_estudo__";
+let pastaNotaAtual = null;
+
+// --- Pastas de notas ---
+
+function obterPastasNotas() {
+  return JSON.parse(localStorage.getItem("notas_pastas") || "[]");
+}
+
+function salvarPastasNotas(pastas) {
+  localStorage.setItem("notas_pastas", JSON.stringify(pastas));
+}
+
+function criarPastaNotaObj(nome) {
+  const pastas = obterPastasNotas();
+  pastas.push({ id: `pasta-${Date.now()}`, nome });
+  salvarPastasNotas(pastas);
+}
+
+function renomearPastaNotaObj(id, novoNome) {
+  const pastas = obterPastasNotas();
+  const pasta = pastas.find((p) => p.id === id);
+  if (pasta) pasta.nome = novoNome;
+  salvarPastasNotas(pastas);
+}
+
+function excluirPastaNotaObj(id) {
+  const todasNotas = [...obterNotasExtras(), ...obterNotasFixasComOverrides()];
+  todasNotas
+    .filter((nota) => nota.pastaId === id)
+    .forEach((nota) => definirPastaDaNota(nota, null));
+
+  salvarPastasNotas(obterPastasNotas().filter((p) => p.id !== id));
+}
+
+function definirPastaDaNota(nota, pastaId) {
+  if (nota.id.startsWith("extra-")) {
+    const extras = obterNotasExtras();
+    const indice = extras.findIndex((n) => n.id === nota.id);
+    if (indice !== -1) {
+      extras[indice].pastaId = pastaId;
+      localStorage.setItem("notas_extras", JSON.stringify(extras));
+    }
+  } else {
+    const overrides = JSON.parse(localStorage.getItem("notas_override") || "{}");
+    overrides[nota.id] = { ...(overrides[nota.id] || {}), pastaId };
+    localStorage.setItem("notas_override", JSON.stringify(overrides));
+  }
+}
+
+function excluirNota(nota) {
+  if (nota.id.startsWith("extra-")) {
+    const extras = obterNotasExtras().filter((n) => n.id !== nota.id);
+    localStorage.setItem("notas_extras", JSON.stringify(extras));
+  } else {
+    const removidas = JSON.parse(localStorage.getItem("notas_removidas") || "[]");
+    if (!removidas.includes(nota.id)) {
+      removidas.push(nota.id);
+      localStorage.setItem("notas_removidas", JSON.stringify(removidas));
+    }
+  }
+}
+
+// --- Ordenação das notas de Estudo (dentro de pastas ou soltas) ---
+
+function obterNotasOrdem() {
+  return JSON.parse(localStorage.getItem("notas_ordem") || "{}");
+}
+
+function ordenarNotasComOverride(chave, notas) {
+  const ordemSalva = obterNotasOrdem()[chave];
+  if (!ordemSalva || ordemSalva.length === 0) return notas;
+
+  const porId = new Map(notas.map((n) => [n.id, n]));
+  const existentes = [];
+  ordemSalva.forEach((id) => {
+    if (porId.has(id)) {
+      existentes.push(porId.get(id));
+      porId.delete(id);
+    }
+  });
+  // notas novas (fora da ordem salva) entram no topo
+  return [...porId.values(), ...existentes];
+}
+
+function obterNotasEstudoTodasComPasta() {
+  const extras = obterNotasExtras();
+  const fixas = obterNotasFixasComOverrides();
+  return [...extras, ...fixas].filter((n) => n.tag === "Estudo");
+}
+
+function obterNotasDoGrupoEstudo(chave) {
+  const todas = obterNotasEstudoTodasComPasta();
+  const doGrupo =
+    chave === CHAVE_SOLTAS_ESTUDO
+      ? todas.filter((n) => !n.pastaId)
+      : todas.filter((n) => n.pastaId === chave);
+  return ordenarNotasComOverride(chave, doGrupo);
+}
+
+function moverNotaEstudo(nota, direcao, chaveGrupo) {
+  const notasDoGrupo = obterNotasDoGrupoEstudo(chaveGrupo);
+  const ids = notasDoGrupo.map((n) => n.id);
+  const posicao = ids.indexOf(nota.id);
+  const novaPosicao = direcao === "cima" ? posicao - 1 : posicao + 1;
+  if (novaPosicao < 0 || novaPosicao >= ids.length) return;
+
+  [ids[posicao], ids[novaPosicao]] = [ids[novaPosicao], ids[posicao]];
+
+  const ordens = obterNotasOrdem();
+  ordens[chaveGrupo] = ids;
+  localStorage.setItem("notas_ordem", JSON.stringify(ordens));
+}
+
 function formatarDataAtual() {
   const agora = new Date();
   const hora = String(agora.getHours()).padStart(2, "0");
@@ -76,10 +190,13 @@ function abrirNotaNoEditor(nota) {
 
 function obterNotasFixasComOverrides() {
   const overrides = JSON.parse(localStorage.getItem("notas_override") || "{}");
-  return notasFixas.map((nota) => {
-    const over = overrides[nota.id];
-    return over ? { ...nota, ...over } : nota;
-  });
+  const removidas = JSON.parse(localStorage.getItem("notas_removidas") || "[]");
+  return notasFixas
+    .filter((nota) => !removidas.includes(nota.id))
+    .map((nota) => {
+      const over = overrides[nota.id];
+      return over ? { ...nota, ...over } : nota;
+    });
 }
 
 function obterNotasExtras() {
@@ -122,6 +239,433 @@ function selecionarFiltroNota(tipo) {
   renderizarNotas();
 }
 
+// --- Menu de 3 pontos (compartilhado por notas e pastas) ---
+
+function criarBotaoMenuNota(aoClicar) {
+  const btn = document.createElement("button");
+  btn.className = "material-icons btn-menu-nota";
+  btn.textContent = "more_vert";
+  btn.style.cssText = `
+    position:absolute; top:8px; right:8px;
+    background:transparent; border:none; cursor:pointer;
+    color:#666; font-size:18px; width:26px; height:26px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:8px; z-index:2;
+  `;
+  btn.onclick = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    aoClicar(btn);
+  };
+  return btn;
+}
+
+function fecharMenuFlutuanteNotas() {
+  const existente = document.getElementById("menu-flutuante-notas");
+  if (existente) existente.remove();
+}
+
+function abrirMenuAcoesNota(btnRef, opcoes) {
+  fecharMenuFlutuanteNotas();
+
+  const celular = document.querySelector(".celular");
+  celular.style.position = "relative";
+
+  const rectBtn = btnRef.getBoundingClientRect();
+  const rectCelular = celular.getBoundingClientRect();
+
+  const menu = document.createElement("div");
+  menu.id = "menu-flutuante-notas";
+  menu.style.cssText = `
+    position:absolute;
+    top:${rectBtn.bottom - rectCelular.top + 4}px;
+    left:${Math.min(rectBtn.left - rectCelular.left, rectCelular.width - 175)}px;
+    background:#1A1A1A;
+    border:1px solid #2A2A2A;
+    border-radius:10px;
+    padding:6px;
+    min-width:165px;
+    z-index:30;
+    box-shadow:0 4px 16px rgba(0,0,0,0.4);
+    display:flex;
+    flex-direction:column;
+  `;
+
+  opcoes.forEach((op) => {
+    const item = document.createElement("button");
+    item.textContent = op.label;
+    item.style.cssText = `
+      background:transparent; border:none; text-align:left;
+      padding:8px 10px; font-size:12.5px; cursor:pointer;
+      border-radius:6px; color:${op.perigo ? "#FF5C5C" : "#EEE"};
+    `;
+    item.onmouseenter = () => (item.style.background = "#242424");
+    item.onmouseleave = () => (item.style.background = "transparent");
+    item.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      fecharMenuFlutuanteNotas();
+      op.aoClicar();
+    };
+    menu.appendChild(item);
+  });
+
+  celular.appendChild(menu);
+
+  setTimeout(() => {
+    document.addEventListener("click", fecharMenuFlutuanteNotas, { once: true });
+  }, 0);
+}
+
+function abrirMenuNota(nota, btnRef, contexto) {
+  const opcoes = [];
+  const ehEstudo = nota.tag === "Estudo";
+  const chaveGrupo = contexto === "pasta" ? pastaNotaAtual : CHAVE_SOLTAS_ESTUDO;
+
+  if (ehEstudo && (contexto === "solta" || contexto === "pasta")) {
+    opcoes.push({
+      label: "Mover para cima",
+      aoClicar: () => {
+        moverNotaEstudo(nota, "cima", chaveGrupo);
+        contexto === "pasta" ? renderizarPastaNotas() : renderizarNotas();
+      },
+    });
+    opcoes.push({
+      label: "Mover para baixo",
+      aoClicar: () => {
+        moverNotaEstudo(nota, "baixo", chaveGrupo);
+        contexto === "pasta" ? renderizarPastaNotas() : renderizarNotas();
+      },
+    });
+  }
+
+  if (ehEstudo) {
+    if (nota.pastaId) {
+      opcoes.push({
+        label: "Remover da pasta",
+        aoClicar: () => {
+          definirPastaDaNota(nota, null);
+          contexto === "pasta" ? renderizarPastaNotas() : renderizarNotas();
+        },
+      });
+    } else {
+      opcoes.push({
+        label: "Adicionar a pasta",
+        aoClicar: () => abrirSeletorPastaNota(nota),
+      });
+    }
+  }
+
+  opcoes.push({
+    label: "Excluir nota",
+    perigo: true,
+    aoClicar: () => {
+      if (!confirm(`Excluir a nota "${nota.titulo}"?`)) return;
+      excluirNota(nota);
+      contexto === "pasta" ? renderizarPastaNotas() : renderizarNotas();
+    },
+  });
+
+  abrirMenuAcoesNota(btnRef, opcoes);
+}
+
+function abrirMenuPastaNota(pasta, btnRef) {
+  const opcoes = [
+    {
+      label: "Renomear",
+      aoClicar: () => renomearPastaNotaPrompt(pasta),
+    },
+    {
+      label: "Excluir",
+      perigo: true,
+      aoClicar: () => {
+        if (
+          !confirm(`Excluir a pasta "${pasta.nome}"? As notas voltarão a ficar soltas.`)
+        )
+          return;
+        excluirPastaNotaObj(pasta.id);
+        renderizarNotas();
+      },
+    },
+  ];
+  abrirMenuAcoesNota(btnRef, opcoes);
+}
+
+function renomearPastaNotaPrompt(pasta) {
+  const novoNome = prompt("Novo nome da pasta:", pasta.nome);
+  if (!novoNome || !novoNome.trim()) return;
+  renomearPastaNotaObj(pasta.id, novoNome.trim());
+  renderizarNotas();
+  if (pastaNotaAtual === pasta.id) {
+    const titulo = document.getElementById("pasta-notas-titulo");
+    if (titulo) titulo.textContent = novoNome.trim();
+  }
+}
+
+function abrirSeletorPastaNota(nota) {
+  const celular = document.querySelector(".celular");
+  celular.style.position = "relative";
+
+  const overlay = document.createElement("div");
+  overlay.style.cssText = `
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    background:rgba(0,0,0,0.7); z-index:25;
+    display:flex; align-items:center; justify-content:center;
+  `;
+
+  const modal = document.createElement("div");
+  modal.style.cssText = `
+    background:#1A1A1A; border-radius:16px; padding:20px;
+    width:85%; max-height:70%; overflow-y:auto;
+    display:flex; flex-direction:column; gap:10px;
+    border:1px solid #2A2A2A;
+  `;
+
+  const titulo = document.createElement("p");
+  titulo.textContent = "Adicionar a pasta";
+  titulo.style.cssText = `color:#FFF; font-size:14px; font-weight:600; margin:0;`;
+  modal.appendChild(titulo);
+
+  const pastas = obterPastasNotas();
+
+  if (pastas.length === 0) {
+    const vazio = document.createElement("p");
+    vazio.textContent = "Nenhuma pasta criada ainda.";
+    vazio.style.cssText = `color:#666; font-size:12.5px; margin:0;`;
+    modal.appendChild(vazio);
+  }
+
+  pastas.forEach((pasta) => {
+    const item = document.createElement("button");
+    item.textContent = pasta.nome;
+    item.style.cssText = `
+      background:#141414; border:1px solid #2A2A2A; border-radius:10px;
+      padding:10px 14px; color:#EEE; font-size:13px; text-align:left; cursor:pointer;
+    `;
+    item.onclick = () => {
+      definirPastaDaNota(nota, pasta.id);
+      overlay.remove();
+      renderizarNotas();
+    };
+    modal.appendChild(item);
+  });
+
+  const btnCancelar = document.createElement("button");
+  btnCancelar.textContent = "Cancelar";
+  btnCancelar.style.cssText = `
+    background:transparent; border:1px solid #2A2A2A; border-radius:10px;
+    color:#666; padding:8px 16px; font-size:13px; cursor:pointer; align-self:flex-end;
+  `;
+  btnCancelar.onclick = () => overlay.remove();
+  modal.appendChild(btnCancelar);
+
+  overlay.appendChild(modal);
+  celular.appendChild(overlay);
+}
+
+function abrirSeletorNotasSoltasParaPasta() {
+  if (pastaNotaAtual === null) return;
+  const celular = document.querySelector(".celular");
+  celular.style.position = "relative";
+
+  const overlay = document.createElement("div");
+  overlay.style.cssText = `
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    background:rgba(0,0,0,0.7); z-index:25;
+    display:flex; align-items:center; justify-content:center;
+  `;
+
+  const modal = document.createElement("div");
+  modal.style.cssText = `
+    background:#1A1A1A; border-radius:16px; padding:20px;
+    width:85%; max-height:70%; overflow-y:auto;
+    display:flex; flex-direction:column; gap:10px;
+    border:1px solid #2A2A2A;
+  `;
+
+  const titulo = document.createElement("p");
+  titulo.textContent = "Adicionar notas soltas";
+  titulo.style.cssText = `color:#FFF; font-size:14px; font-weight:600; margin:0;`;
+  modal.appendChild(titulo);
+
+  const soltas = obterNotasEstudoTodasComPasta().filter((n) => !n.pastaId);
+
+  if (soltas.length === 0) {
+    const vazio = document.createElement("p");
+    vazio.textContent = "Nenhuma nota solta de Estudo.";
+    vazio.style.cssText = `color:#666; font-size:12.5px; margin:0;`;
+    modal.appendChild(vazio);
+  }
+
+  soltas.forEach((nota) => {
+    const item = document.createElement("button");
+    item.textContent = nota.titulo;
+    item.style.cssText = `
+      background:#141414; border:1px solid #2A2A2A; border-radius:10px;
+      padding:10px 14px; color:#EEE; font-size:13px; text-align:left; cursor:pointer;
+    `;
+    item.onclick = () => {
+      definirPastaDaNota(nota, pastaNotaAtual);
+      overlay.remove();
+      renderizarPastaNotas();
+    };
+    modal.appendChild(item);
+  });
+
+  const btnFechar = document.createElement("button");
+  btnFechar.textContent = "Fechar";
+  btnFechar.style.cssText = `
+    background:transparent; border:1px solid #2A2A2A; border-radius:10px;
+    color:#666; padding:8px 16px; font-size:13px; cursor:pointer; align-self:flex-end;
+  `;
+  btnFechar.onclick = () => overlay.remove();
+  modal.appendChild(btnFechar);
+
+  overlay.appendChild(modal);
+  celular.appendChild(overlay);
+}
+
+// --- Cards ---
+
+function criarCardNota(nota, contexto) {
+  const card = document.createElement("a");
+  card.className = `nota-card ${nota.tagcor}`;
+  card.style.cursor = "pointer";
+  card.onclick = (e) => {
+    e.preventDefault();
+    abrirNotaNoEditor(nota);
+  };
+
+  const preview = nota.corpo
+    .split("||")
+    .join(" ")
+    .replace(/<[^>]+>/g, "");
+
+  card.innerHTML = `
+    <div class="nota-titulo">${nota.titulo}</div>
+    <div class="nota-preview">${preview}</div>
+    <div class="nota-meta">
+      <span class="nota-data">${nota.data}</span>
+      <span class="nota-tag ${nota.tagcor}">${nota.tag}</span>
+    </div>
+  `;
+
+  card.appendChild(criarBotaoMenuNota((btnRef) => abrirMenuNota(nota, btnRef, contexto)));
+
+  return card;
+}
+
+function criarCardPasta(pasta, notasDaPasta) {
+  const card = document.createElement("div");
+  card.className = "pasta-nota-card";
+  card.onclick = () => abrirPastaNotas(pasta.id);
+
+  card.innerHTML = `
+    <span class="material-icons icone-pasta">folder</span>
+    <div class="pasta-nota-info">
+      <div class="pasta-nota-nome">${pasta.nome}</div>
+      <div class="pasta-nota-contagem">${notasDaPasta.length} nota${notasDaPasta.length === 1 ? "" : "s"}</div>
+    </div>
+  `;
+
+  card.appendChild(criarBotaoMenuNota((btnRef) => abrirMenuPastaNota(pasta, btnRef)));
+
+  return card;
+}
+
+// --- Tela de pasta de notas ---
+
+function abrirPastaNotas(pastaId) {
+  const pasta = obterPastasNotas().find((p) => p.id === pastaId);
+  if (!pasta) return;
+
+  pastaNotaAtual = pastaId;
+
+  document.getElementById("pasta-notas-titulo").textContent = pasta.nome;
+  document.getElementById("tela-notas").classList.add("oculto");
+  document.getElementById("tela-pasta-notas").classList.remove("oculto");
+
+  renderizarPastaNotas();
+}
+
+function fecharPastaNotas() {
+  pastaNotaAtual = null;
+  document.getElementById("tela-pasta-notas").classList.add("oculto");
+  document.getElementById("tela-notas").classList.remove("oculto");
+  document.getElementById("lista-pasta-notas").innerHTML = "";
+  renderizarNotas();
+}
+
+function voltarOuHistoricoNotas() {
+  if (pastaNotaAtual !== null) {
+    fecharPastaNotas();
+  } else {
+    history.back();
+  }
+}
+
+function renderizarPastaNotas() {
+  const lista = document.getElementById("lista-pasta-notas");
+  if (!lista || pastaNotaAtual === null) return;
+  lista.innerHTML = "";
+
+  const notas = obterNotasDoGrupoEstudo(pastaNotaAtual);
+
+  if (notas.length === 0) {
+    const vazio = document.createElement("p");
+    vazio.style.cssText = `color:#555; font-size:13px; text-align:center; padding:24px 0;`;
+    vazio.textContent = "Nenhuma nota nesta pasta.";
+    lista.appendChild(vazio);
+    return;
+  }
+
+  notas.forEach((nota) => {
+    lista.appendChild(criarCardNota(nota, "pasta"));
+  });
+}
+
+// --- Lista principal de notas ---
+
+function renderizarNotasAgrupadasPorPasta(lista, todasNotas) {
+  const notasEstudo = todasNotas.filter((n) => n.tag === "Estudo");
+  const pastas = obterPastasNotas();
+
+  const contador = document.getElementById("contador-notas");
+  if (contador) {
+    contador.textContent = `${notasEstudo.length} nota${notasEstudo.length === 1 ? "" : "s"}`;
+  }
+
+  if (notasEstudo.length === 0 && pastas.length === 0) {
+    const vazio = document.createElement("p");
+    vazio.style.cssText = `color:#555; font-size:13px; text-align:center; padding:24px 0;`;
+    vazio.textContent = "Nenhuma nota encontrada.";
+    lista.appendChild(vazio);
+    return;
+  }
+
+  pastas.forEach((pasta) => {
+    const notasDaPasta = notasEstudo.filter((n) => n.pastaId === pasta.id);
+    lista.appendChild(criarCardPasta(pasta, notasDaPasta));
+  });
+
+  const soltas = ordenarNotasComOverride(
+    CHAVE_SOLTAS_ESTUDO,
+    notasEstudo.filter((n) => !n.pastaId),
+  );
+
+  if (soltas.length > 0) {
+    if (pastas.length > 0) {
+      const secaoTitulo = document.createElement("div");
+      secaoTitulo.className = "secao-titulo-notas";
+      secaoTitulo.textContent = "Sem pasta";
+      lista.appendChild(secaoTitulo);
+    }
+    soltas.forEach((nota) => {
+      lista.appendChild(criarCardNota(nota, "solta"));
+    });
+  }
+}
+
 function renderizarNotas() {
   const lista = document.getElementById("lista-notas");
   if (!lista) return;
@@ -129,6 +673,11 @@ function renderizarNotas() {
 
   const notasExtras = obterNotasExtras();
   const todasNotas = [...notasExtras, ...obterNotasFixasComOverrides()];
+
+  if (filtroNotaAtivo === "estudo" && !buscaNotaAtiva) {
+    renderizarNotasAgrupadasPorPasta(lista, todasNotas);
+    return;
+  }
 
   const notasFiltradas = todasNotas
     .filter(
@@ -155,29 +704,7 @@ function renderizarNotas() {
   }
 
   notasFiltradas.forEach((nota) => {
-    const card = document.createElement("a");
-    card.className = `nota-card ${nota.tagcor}`;
-    card.style.cursor = "pointer";
-    card.onclick = (e) => {
-      e.preventDefault();
-      abrirNotaNoEditor(nota);
-    };
-
-    const preview = nota.corpo
-      .split("||")
-      .join(" ")
-      .replace(/<[^>]+>/g, "");
-
-    card.innerHTML = `
-      <div class="nota-titulo">${nota.titulo}</div>
-      <div class="nota-preview">${preview}</div>
-      <div class="nota-meta">
-        <span class="nota-data">${nota.data}</span>
-        <span class="nota-tag ${nota.tagcor}">${nota.tag}</span>
-      </div>
-    `;
-
-    lista.appendChild(card);
+    lista.appendChild(criarCardNota(nota, "flat"));
   });
 }
 
@@ -312,7 +839,143 @@ function abrirCriarNota() {
   setTimeout(() => inputTitulo.focus(), 100);
 }
 
-document.querySelector(".btn-nova-nota").onclick = abrirCriarNota;
+function abrirCriarPastaNota() {
+  const celular = document.querySelector(".celular");
+  celular.style.position = "relative";
+
+  const overlay = document.createElement("div");
+  overlay.style.cssText = `
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+
+  const modal = document.createElement("div");
+  modal.style.cssText = `
+    background: #1A1A1A;
+    border-radius: 16px;
+    padding: 20px;
+    width: 85%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid #2A2A2A;
+  `;
+
+  const titulo = document.createElement("p");
+  titulo.textContent = "Nova pasta";
+  titulo.style.cssText = `color:#FFF; font-size:14px; font-weight:600; margin:0;`;
+
+  const inputNome = document.createElement("input");
+  inputNome.type = "text";
+  inputNome.placeholder = "Nome da pasta";
+  inputNome.style.cssText = `
+    background:#141414; border:1px solid #2A2A2A; border-radius:10px;
+    padding:10px 14px; color:#FFF; font-size:13px; outline:none;
+  `;
+
+  const botoes = document.createElement("div");
+  botoes.style.cssText = `display:flex; gap:8px; justify-content:flex-end;`;
+
+  const btnCancelar = document.createElement("button");
+  btnCancelar.textContent = "Cancelar";
+  btnCancelar.style.cssText = `
+    background:transparent; border:1px solid #2A2A2A; border-radius:10px;
+    color:#666; padding:8px 16px; font-size:13px; cursor:pointer;
+  `;
+  btnCancelar.onclick = () => overlay.remove();
+
+  const btnCriar = document.createElement("button");
+  btnCriar.textContent = "Criar";
+  btnCriar.style.cssText = `
+    background:#415FFF; border:none; border-radius:10px;
+    color:#FFF; padding:8px 16px; font-size:13px; font-weight:600; cursor:pointer;
+  `;
+  btnCriar.onclick = () => {
+    const nome = inputNome.value.trim();
+    if (!nome) return;
+    criarPastaNotaObj(nome);
+    overlay.remove();
+    renderizarNotas();
+  };
+
+  botoes.appendChild(btnCancelar);
+  botoes.appendChild(btnCriar);
+
+  modal.appendChild(titulo);
+  modal.appendChild(inputNome);
+  modal.appendChild(botoes);
+  overlay.appendChild(modal);
+  celular.appendChild(overlay);
+
+  setTimeout(() => inputNome.focus(), 100);
+}
+
+function abrirEscolhaNovo() {
+  const celular = document.querySelector(".celular");
+  celular.style.position = "relative";
+
+  const overlay = document.createElement("div");
+  overlay.style.cssText = `
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 20;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  `;
+  overlay.onclick = (e) => {
+    if (e.target === overlay) overlay.remove();
+  };
+
+  const modal = document.createElement("div");
+  modal.style.cssText = `
+    background: #1A1A1A;
+    border-radius: 16px 16px 0 0;
+    padding: 16px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid #2A2A2A;
+    border-bottom: none;
+  `;
+
+  const estiloOpcao = `
+    background:#141414; border:1px solid #2A2A2A; border-radius:10px;
+    padding:12px 14px; color:#EEE; font-size:14px; text-align:left; cursor:pointer;
+  `;
+
+  const opcaoNota = document.createElement("button");
+  opcaoNota.textContent = "Nova nota";
+  opcaoNota.style.cssText = estiloOpcao;
+  opcaoNota.onclick = () => {
+    overlay.remove();
+    abrirCriarNota();
+  };
+
+  const opcaoPasta = document.createElement("button");
+  opcaoPasta.textContent = "Nova pasta";
+  opcaoPasta.style.cssText = estiloOpcao;
+  opcaoPasta.onclick = () => {
+    overlay.remove();
+    abrirCriarPastaNota();
+  };
+
+  modal.appendChild(opcaoNota);
+  modal.appendChild(opcaoPasta);
+  overlay.appendChild(modal);
+  celular.appendChild(overlay);
+}
+
+document.querySelector(".btn-nova-nota").onclick = abrirEscolhaNovo;
 
 document.querySelectorAll("#filtros-notas .filtro").forEach((el) => {
   el.onclick = () => selecionarFiltroNota(el.dataset.tipo);

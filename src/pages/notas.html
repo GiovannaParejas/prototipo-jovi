@@ -29,37 +29,53 @@
         </div>
       </header>
 
-      <div class="app-header">
-        <div class="app-header-top">
-          <h1 class="app-titulo">Notas</h1>
-          <button class="btn-nova-nota">
+      <div class="tela" id="tela-notas">
+        <div class="app-header">
+          <div class="app-header-top">
+            <h1 class="app-titulo">Notas</h1>
+            <button class="btn-nova-nota">
+              <span class="material-icons">add</span>
+            </button>
+          </div>
+          <div class="search-bar">
+            <span class="material-icons">search</span>
+            <input
+              type="text"
+              id="busca-notas"
+              class="search-input"
+              placeholder="Buscar notas..."
+            />
+          </div>
+        </div>
+
+        <div class="filtros" id="filtros-notas">
+          <div class="filtro ativo" data-tipo="todas">Todas</div>
+          <div class="filtro inativo" data-tipo="estudo">Estudo</div>
+          <div class="filtro inativo" data-tipo="pessoal">Pessoal</div>
+          <div class="filtro inativo" data-tipo="rascunho">Rascunho</div>
+        </div>
+
+        <div class="contador" id="contador-notas">4 notas</div>
+
+        <main class="notas-lista" id="lista-notas"></main>
+      </div>
+
+      <div class="tela oculto" id="tela-pasta-notas">
+        <div class="app-header">
+          <button class="btn-voltar" onclick="fecharPastaNotas()">
+            <span class="material-icons">arrow_back</span>
+          </button>
+          <h1 class="app-titulo" id="pasta-notas-titulo" style="font-size: 16px"></h1>
+          <button class="btn-voltar" onclick="abrirSeletorNotasSoltasParaPasta()">
             <span class="material-icons">add</span>
           </button>
         </div>
-        <div class="search-bar">
-          <span class="material-icons">search</span>
-          <input
-            type="text"
-            id="busca-notas"
-            class="search-input"
-            placeholder="Buscar notas..."
-          />
-        </div>
+
+        <main class="notas-lista" id="lista-pasta-notas"></main>
       </div>
-
-      <div class="filtros" id="filtros-notas">
-        <div class="filtro ativo" data-tipo="todas">Todas</div>
-        <div class="filtro inativo" data-tipo="estudo">Estudo</div>
-        <div class="filtro inativo" data-tipo="pessoal">Pessoal</div>
-        <div class="filtro inativo" data-tipo="rascunho">Rascunho</div>
-      </div>
-
-      <div class="contador" id="contador-notas">4 notas</div>
-
-      <main class="notas-lista" id="lista-notas"></main>
 
       <footer class="barra-inferior">
-        <button class="material-icons" onclick="history.back()">
+        <button class="material-icons" onclick="voltarOuHistoricoNotas()">
           arrow_back
         </button>
         <button
