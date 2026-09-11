@@ -117,8 +117,17 @@ body {
     color: #555;
 }
 
-.search-bar .placeholder {
+.search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
     font-size: 13px;
+    color: var(--cor-texto-branco);
+    font-family: inherit;
+}
+
+.search-input::placeholder {
     color: var(--cor-texto-fraco);
 }
 
