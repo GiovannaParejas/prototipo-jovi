@@ -85,7 +85,7 @@ function renderizarAcoesFoto(index) {
       <span class="material-icons">auto_awesome</span>
       <span>Organizar</span>
     </button>
-    <button class="acao-btn" onclick="traduzirFoto()">
+    <button class="acao-btn" onclick="abrirSeletorIdiomaTraducao()">
       <span class="material-icons">translate</span>
       <span>Traduzir</span>
     </button>
@@ -473,17 +473,108 @@ async function organizarComIA(index) {
   }
 }
 
-async function traduzirFoto() {
+async function traduzirFoto(idioma) {
   const foto = fotos[fotoAtual];
   mostrarAviso("Traduzindo com IA...");
 
   try {
-    const texto = await reconhecerFotoComGemini(foto.src, "traduzir");
+    const texto = await reconhecerFotoComGemini(foto.src, "traduzir", idioma);
     abrirTraducaoFoto(texto);
   } catch (err) {
     console.error("Erro ao traduzir foto:", err);
     mostrarAviso("Não foi possível traduzir a foto agora.");
   }
+}
+
+function abrirSeletorIdiomaTraducao() {
+  const celular = document.querySelector(".celular");
+
+  const overlay = document.createElement("div");
+  overlay.id = "overlay-idioma-traducao";
+  overlay.style.cssText = `
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.75);
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+
+  const modal = document.createElement("div");
+  modal.style.cssText = `
+    background: #1A1A1A;
+    border-radius: 16px;
+    padding: 20px;
+    width: 85%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid #2B2B2B;
+  `;
+
+  const titulo = document.createElement("p");
+  titulo.textContent = "Traduzir para qual idioma?";
+  titulo.style.cssText = `color:#FFF; font-size:14px; font-weight:600; margin:0;`;
+
+  const confirmar = (idioma) => {
+    if (!idioma) return;
+    overlay.remove();
+    traduzirFoto(idioma);
+  };
+
+  const lista = document.createElement("div");
+  lista.style.cssText = `display:flex; flex-direction:column; gap:8px;`;
+
+  ["Português", "Inglês", "Espanhol", "Francês", "Alemão", "Italiano"].forEach((idioma) => {
+    const btnIdioma = document.createElement("button");
+    btnIdioma.textContent = idioma;
+    btnIdioma.style.cssText = `
+      background:#141414; border:1px solid #2B2B2B; border-radius:10px;
+      padding:10px 14px; color:#EEE; font-size:13px; text-align:left; cursor:pointer;
+    `;
+    btnIdioma.onclick = () => confirmar(idioma);
+    lista.appendChild(btnIdioma);
+  });
+
+  const inputOutro = document.createElement("input");
+  inputOutro.type = "text";
+  inputOutro.placeholder = "Outro idioma...";
+  inputOutro.style.cssText = `
+    background:#141414; border:1px solid #2B2B2B; border-radius:10px;
+    padding:10px 14px; color:#FFF; font-size:13px; outline:none;
+  `;
+
+  const btnConfirmarOutro = document.createElement("button");
+  btnConfirmarOutro.textContent = "Traduzir";
+  btnConfirmarOutro.style.cssText = `
+    background:#2B7FE8; border:none; border-radius:10px;
+    color:#FFF; padding:8px 16px; font-size:13px; font-weight:600; cursor:pointer;
+  `;
+  btnConfirmarOutro.onclick = () => confirmar(inputOutro.value.trim());
+
+  const btnCancelar = document.createElement("button");
+  btnCancelar.textContent = "Cancelar";
+  btnCancelar.style.cssText = `
+    background: transparent;
+    border: 1px solid #2B2B2B;
+    border-radius: 10px;
+    color: #888;
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    align-self: flex-end;
+  `;
+  btnCancelar.onclick = () => overlay.remove();
+
+  modal.appendChild(titulo);
+  modal.appendChild(lista);
+  modal.appendChild(inputOutro);
+  modal.appendChild(btnConfirmarOutro);
+  modal.appendChild(btnCancelar);
+  overlay.appendChild(modal);
+  celular.appendChild(overlay);
 }
 
 function abrirTraducaoFoto(texto) {
