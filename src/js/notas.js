@@ -101,6 +101,14 @@ function obterNotasExtras() {
 }
 
 let filtroNotaAtivo = "todas";
+let buscaNotaAtiva = "";
+
+function normalizarTexto(texto) {
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
 
 function selecionarFiltroNota(tipo) {
   filtroNotaAtivo = tipo;
@@ -122,14 +130,28 @@ function renderizarNotas() {
   const notasExtras = obterNotasExtras();
   const todasNotas = [...notasExtras, ...obterNotasFixasComOverrides()];
 
-  const notasFiltradas =
-    filtroNotaAtivo === "todas"
-      ? todasNotas
-      : todasNotas.filter((nota) => nota.tag.toLowerCase() === filtroNotaAtivo);
+  const notasFiltradas = todasNotas
+    .filter(
+      (nota) => filtroNotaAtivo === "todas" || nota.tag.toLowerCase() === filtroNotaAtivo,
+    )
+    .filter((nota) => {
+      if (!buscaNotaAtiva) return true;
+      const corpoTexto = nota.corpo.replace(/<[^>]+>/g, "");
+      const alvo = normalizarTexto(`${nota.titulo} ${corpoTexto}`);
+      return alvo.includes(buscaNotaAtiva);
+    });
 
   const contador = document.getElementById("contador-notas");
   if (contador) {
     contador.textContent = `${notasFiltradas.length} nota${notasFiltradas.length === 1 ? "" : "s"}`;
+  }
+
+  if (notasFiltradas.length === 0) {
+    const vazio = document.createElement("p");
+    vazio.style.cssText = `color:#555; font-size:13px; text-align:center; padding:24px 0;`;
+    vazio.textContent = "Nenhuma nota encontrada.";
+    lista.appendChild(vazio);
+    return;
   }
 
   notasFiltradas.forEach((nota) => {
@@ -295,5 +317,13 @@ document.querySelector(".btn-nova-nota").onclick = abrirCriarNota;
 document.querySelectorAll("#filtros-notas .filtro").forEach((el) => {
   el.onclick = () => selecionarFiltroNota(el.dataset.tipo);
 });
+
+const inputBuscaNotas = document.getElementById("busca-notas");
+if (inputBuscaNotas) {
+  inputBuscaNotas.addEventListener("input", () => {
+    buscaNotaAtiva = normalizarTexto(inputBuscaNotas.value.trim());
+    renderizarNotas();
+  });
+}
 
 renderizarNotas();
