@@ -66,6 +66,20 @@ function abrirNotaNoEditor(nota) {
   window.location.href = "nota-editor.html";
 }
 
+let filtroNotaAtivo = "todas";
+
+function selecionarFiltroNota(tipo) {
+  filtroNotaAtivo = tipo;
+
+  document.querySelectorAll("#filtros-notas .filtro").forEach((el) => {
+    const ativo = el.dataset.tipo === tipo;
+    el.classList.toggle("ativo", ativo);
+    el.classList.toggle("inativo", !ativo);
+  });
+
+  renderizarNotas();
+}
+
 function renderizarNotas() {
   const lista = document.getElementById("lista-notas");
   if (!lista) return;
@@ -74,12 +88,17 @@ function renderizarNotas() {
   const notasExtras = JSON.parse(localStorage.getItem("notas_extras") || "[]");
   const todasNotas = [...notasExtras, ...notasFixas];
 
+  const notasFiltradas =
+    filtroNotaAtivo === "todas"
+      ? todasNotas
+      : todasNotas.filter((nota) => nota.tag.toLowerCase() === filtroNotaAtivo);
+
   const contador = document.getElementById("contador-notas");
   if (contador) {
-    contador.textContent = `${todasNotas.length} nota${todasNotas.length === 1 ? "" : "s"}`;
+    contador.textContent = `${notasFiltradas.length} nota${notasFiltradas.length === 1 ? "" : "s"}`;
   }
 
-  todasNotas.forEach((nota) => {
+  notasFiltradas.forEach((nota) => {
     const card = document.createElement("a");
     card.className = `nota-card ${nota.tagcor}`;
     card.style.cursor = "pointer";
@@ -237,5 +256,9 @@ function abrirCriarNota() {
 }
 
 document.querySelector(".btn-nova-nota").onclick = abrirCriarNota;
+
+document.querySelectorAll("#filtros-notas .filtro").forEach((el) => {
+  el.onclick = () => selecionarFiltroNota(el.dataset.tipo);
+});
 
 renderizarNotas();
