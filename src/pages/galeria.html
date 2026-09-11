@@ -15,6 +15,7 @@
     />
     <link rel="stylesheet" href="../css/galeria.css" />
     <link rel="icon" href="../assets/favicon.ico" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <title>Galeria — Jovi</title>
   </head>
 
@@ -55,6 +56,13 @@
             >
               Estudo
             </button>
+            <button
+              class="tab"
+              id="tab-lixeira"
+              onclick="trocarTab('lixeira', this)"
+            >
+              Lixeira
+            </button>
           </div>
 
           <!-- Modo Estudo: pastas -->
@@ -84,6 +92,11 @@
           <!-- Modo Pessoal: grid 2 colunas -->
           <div id="view-pessoal">
             <div class="fotos-grid-pessoal" id="grid-pessoal"></div>
+          </div>
+          <!-- Lixeira: fotos removidas -->
+          <div id="view-lixeira" class="oculto">
+            <p class="secao-titulo" id="lixeira-vazia">Nenhuma foto na lixeira.</p>
+            <div class="fotos-grid-pessoal" id="grid-lixeira"></div>
           </div>
         </main>
       </div>
@@ -117,6 +130,10 @@
           <button class="acao-btn" onclick="abrirResumo()">
             <span class="material-icons">summarize</span>
             <span>Resumo</span>
+          </button>
+          <button class="acao-btn" onclick="organizarComIA(fotoAtual)">
+            <span class="material-icons">auto_awesome</span>
+            <span>Organizar</span>
           </button>
           <button class="acao-btn">
             <span class="material-icons">edit</span>
@@ -161,7 +178,7 @@
             <span class="material-icons">arrow_back</span>
           </button>
           <span class="header-titulo" id="pdf-titulo">Documento PDF</span>
-          <button class="btn-voltar" onclick="alert('Download simulado!')">
+          <button class="btn-voltar" onclick="baixarPDF()">
             <span class="material-icons">download</span>
           </button>
         </div>

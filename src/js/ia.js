@@ -1,32 +1,5 @@
 const params = new URLSearchParams(window.location.search);
-const foto = params.get("foto");
-
-const resumos = {
-  0: {
-    titulo: "Design Thinking - Process (Resumo)",
-    corpo: `Design Thinking é uma abordagem de inovação centrada no usuário, que utiliza pesquisa para entender profundamente suas necessidades, dores e comportamentos, com o objetivo de criar soluções mais relevantes.
-
-Inovação é um processo criativo que gera impacto positivo, podendo ser incremental (melhorias contínuas) ou disruptiva (mudanças que transformam mercados e comportamentos).
-
-Para inovar de forma eficaz, uma solução deve equilibrar três pilares: ser desejável para as pessoas, viável como negócio e tecnicamente possível de ser implementada.`,
-  },
-  1: {
-    titulo: "Holiday at Sea (Resumo)",
-    corpo: `O texto relata a experiência de uma família em um cruzeiro pelo Caribe, que inicialmente hesitava por ter quatro filhos menores de 14 anos.
-
-A bordo, as crianças tinham clubes e atividades próprias, enquanto os pais podiam relaxar. As instalações incluíam lojas, pista de corrida e restaurantes variados.
-
-O autor recomenda cruzeiros, mas aconselha buscar descontos antecipados. Alerta que celulares não funcionam no mar e que gorjetas são esperadas, porém orientadas.`,
-  },
-  2: {
-    titulo: "Férias no Mar — Tradução (Resumo)",
-    corpo: `O texto narra a experiência de uma família em um cruzeiro pelo Caribe, inicialmente receosa por ter quatro filhos pequenos.
-
-A bordo, as crianças participavam de clubes por faixa etária, enquanto os pais relaxavam. As instalações eram excelentes: lojas, quadras e restaurantes de qualidade.
-
-O autor recomenda cruzeiros e orienta buscar os melhores preços. Lembra que celulares não funcionam no mar e que gorjetas são esperadas, mas sempre informadas.`,
-  },
-};
+const modoResumoFoto = params.get("foto") !== null;
 
 let historicoConversa = [];
 let contextoConversa = null;
@@ -192,26 +165,36 @@ function configurarEnvio() {
 
 const iaConteudo = document.getElementById("ia-conteudo");
 
-if (foto !== null && resumos[foto]) {
-  const resumo = resumos[foto];
-  contextoConversa = `${resumo.titulo}\n\n${resumo.corpo}`;
-
-  iaConteudo.innerHTML = `
-        <div class="ia-resumo">
-            <h2 class="resumo-titulo">${resumo.titulo}</h2>
-            <div class="resumo-corpo" id="resumo-corpo"></div>
-        </div>
-    `;
-  resumo.corpo.split("\n\n").forEach((p) => {
-    const el = document.createElement("p");
-    el.textContent = p;
-    document.getElementById("resumo-corpo").appendChild(el);
-  });
-} else {
+function iniciarComoChatGeral() {
   iaConteudo.innerHTML = "";
   iaConteudo.appendChild(
     criarBolhaMensagem("ia", "Oi! Eu sou a JOVI. Pode me perguntar qualquer coisa sobre seus estudos."),
   );
+}
+
+async function iniciarComoResumoDeFoto() {
+  const titulo = sessionStorage.getItem("ia_foto_titulo");
+  const texto = sessionStorage.getItem("ia_foto_texto");
+  sessionStorage.removeItem("ia_foto_titulo");
+  sessionStorage.removeItem("ia_foto_texto");
+
+  if (!titulo || !texto) {
+    iniciarComoChatGeral();
+    return;
+  }
+
+  contextoConversa = `${titulo}\n\n${texto}`;
+  const tituloHeader = document.getElementById("ia-titulo");
+  if (tituloHeader) tituloHeader.textContent = titulo;
+
+  await enviarParaIA(`Resuma o conteúdo da foto "${titulo}" para mim.`);
+}
+
+iaConteudo.innerHTML = "";
+if (modoResumoFoto) {
+  iniciarComoResumoDeFoto();
+} else {
+  iniciarComoChatGeral();
 }
 
 configurarEnvio();
