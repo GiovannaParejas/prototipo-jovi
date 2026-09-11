@@ -150,6 +150,10 @@ body {
     color: var(--cor-texto-fraco);
 }
 
+.ia-input:disabled {
+    opacity: 0.6;
+}
+
 .ia-enviar {
     background: var(--cor-branco);
     border: none;
