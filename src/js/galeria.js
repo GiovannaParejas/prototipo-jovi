@@ -56,6 +56,7 @@ setTimeout(() => {
   renderizarPastas();
 }, 0);
 let fotoAtual = null;
+let fotoAtualContexto = null;
 
 const params = new URLSearchParams(window.location.search);
 const fotoParam = params.get("foto");
@@ -84,16 +85,16 @@ function renderizarAcoesFoto(index) {
       <span class="material-icons">auto_awesome</span>
       <span>Organizar</span>
     </button>
-    <button class="acao-btn">
-      <span class="material-icons">edit</span>
-      <span>Editar</span>
+    <button class="acao-btn" onclick="traduzirFoto()">
+      <span class="material-icons">translate</span>
+      <span>Traduzir</span>
     </button>
   `;
-  aplicarBtnEsquerda(index);
 }
 
-function abrirFoto(index) {
+function abrirFoto(index, contexto = null) {
   fotoAtual = index;
+  fotoAtualContexto = contexto;
   const foto = fotos[index];
   document.getElementById("foto-ampliada").src = foto.src;
   document.getElementById("foto-titulo").textContent = foto.titulo;
@@ -472,6 +473,78 @@ async function organizarComIA(index) {
   }
 }
 
+async function traduzirFoto() {
+  const foto = fotos[fotoAtual];
+  mostrarAviso("Traduzindo com IA...");
+
+  try {
+    const texto = await reconhecerFotoComGemini(foto.src, "traduzir");
+    abrirTraducaoFoto(texto);
+  } catch (err) {
+    console.error("Erro ao traduzir foto:", err);
+    mostrarAviso("Não foi possível traduzir a foto agora.");
+  }
+}
+
+function abrirTraducaoFoto(texto) {
+  const celular = document.querySelector(".celular");
+
+  const overlay = document.createElement("div");
+  overlay.id = "overlay-traducao-foto";
+  overlay.style.cssText = `
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.75);
+    z-index: 25;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  `;
+
+  const modal = document.createElement("div");
+  modal.style.cssText = `
+    background: #1A1A1A;
+    border-radius: 16px;
+    padding: 20px;
+    width: 85%;
+    max-height: 75%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 1px solid #2B2B2B;
+  `;
+
+  const titulo = document.createElement("p");
+  titulo.textContent = "Tradução";
+  titulo.style.cssText = `color:#FFF; font-size:14px; font-weight:600; margin:0;`;
+
+  const corpo = document.createElement("p");
+  corpo.textContent = texto;
+  corpo.style.cssText = `color:#CCC; font-size:13px; line-height:1.6; white-space:pre-wrap; margin:0;`;
+
+  const btnFechar = document.createElement("button");
+  btnFechar.textContent = "Fechar";
+  btnFechar.style.cssText = `
+    background: transparent;
+    border: 1px solid #2B2B2B;
+    border-radius: 10px;
+    color: #888;
+    padding: 8px 16px;
+    font-size: 13px;
+    cursor: pointer;
+    align-self: flex-end;
+  `;
+  btnFechar.onclick = () => overlay.remove();
+
+  modal.appendChild(titulo);
+  modal.appendChild(corpo);
+  modal.appendChild(btnFechar);
+  overlay.appendChild(modal);
+  celular.appendChild(overlay);
+}
+
 function trocarTab(modo, el) {
   document.querySelectorAll(".tab").forEach((t) => t.classList.remove("ativo"));
   el.classList.add("ativo");
@@ -788,7 +861,7 @@ function moverFotoNaPasta(nomePasta, index, direcao) {
   localStorage.setItem("ordem_fotos_pastas", JSON.stringify(ordensFotos));
 
   renderizarPastas();
-  abrirPasta(nomePasta);
+  atualizarTelaPastaSePreciso(nomePasta);
 }
 
 function removerFotoDaPasta(nomePasta, index) {
@@ -810,12 +883,13 @@ function removerFotoDaPasta(nomePasta, index) {
   }
 
   renderizarPastas();
-  abrirPasta(nomePasta);
+  atualizarTelaPastaSePreciso(nomePasta);
   mostrarAviso("Foto removida da pasta!");
 }
 
 function abrirFotoDaPasta(index) {
   fotoAtual = index;
+  fotoAtualContexto = { tipo: "pasta", pasta: pastaAtual };
   const foto = fotos[index];
   document.getElementById("foto-ampliada").src = foto.src;
   document.getElementById("foto-titulo").textContent = foto.titulo;
@@ -833,20 +907,13 @@ function fecharPasta() {
   document.getElementById("tela-galeria").classList.remove("oculto");
 }
 
-function aplicarBtnEsquerda(index) {
-  setTimeout(() => {
-    const btnEsq = document.getElementById("btn-esquerda");
-    if (!btnEsq) return;
-    if (index === 1) {
-      btnEsq.innerHTML =
-        '<span class="material-icons">translate</span><span>Traduzir</span>';
-      btnEsq.onclick = () => abrirFoto(2);
-    } else if (index === 2) {
-      btnEsq.innerHTML =
-        '<span class="material-icons">arrow_back</span><span>Voltar</span>';
-      btnEsq.onclick = () => abrirFoto(1);
-    }
-  }, 0);
+function atualizarTelaPastaSePreciso(nomePasta) {
+  const telaFotoVisivel = !document
+    .getElementById("tela-foto")
+    .classList.contains("oculto");
+  if (!telaFotoVisivel) {
+    abrirPasta(nomePasta);
+  }
 }
 
 function criarPasta() {
@@ -1180,7 +1247,7 @@ function renderizarLixeira() {
       criarBotaoMenuFoto((btnRef) => abrirMenuFotoLixeira(index, btnRef)),
     );
 
-    div.onclick = () => abrirFoto(index);
+    div.onclick = () => abrirFoto(index, { tipo: "lixeira" });
     grid.appendChild(div);
   });
 }
@@ -1203,6 +1270,30 @@ function restaurarFotoDaLixeira(index) {
   });
   renderizarPastas();
   mostrarAviso("Foto restaurada!");
+}
+
+function abrirMenuFotoDaTelaFoto(btnRef) {
+  const index = fotoAtual;
+  const ctx = fotoAtualContexto;
+
+  if (ctx?.tipo === "pasta") {
+    abrirMenuFoto(ctx.pasta, index, btnRef);
+  } else if (ctx?.tipo === "solta") {
+    abrirMenuFotoSolta(index, btnRef);
+  } else if (ctx?.tipo === "pessoal") {
+    abrirMenuFotoPessoal(index, btnRef);
+  } else if (ctx?.tipo === "lixeira") {
+    abrirMenuFotoLixeira(index, btnRef);
+  } else {
+    abrirMenuAcoesFoto(btnRef, [
+      {
+        label: "Adicionar a pasta",
+        icon: "create_new_folder",
+        color: "#FFF",
+        action: () => abrirSeletorPastas(index),
+      },
+    ]);
+  }
 }
 
 const CHAVE_ORDEM_SOLTAS = "__soltas__";
@@ -1252,7 +1343,7 @@ function renderizarFotosSoltas(todasPastas, pastasExtras) {
       criarBotaoMenuFoto((btnRef) => abrirMenuFotoSolta(index, btnRef)),
     );
 
-    div.onclick = () => abrirFoto(index);
+    div.onclick = () => abrirFoto(index, { tipo: "solta" });
     gridSoltas.appendChild(div);
   });
 }
@@ -1286,7 +1377,7 @@ function renderizarFotosPessoal(todasPastas, pastasExtras) {
       criarBotaoMenuFoto((btnRef) => abrirMenuFotoPessoal(index, btnRef)),
     );
 
-    div.onclick = () => abrirFoto(index);
+    div.onclick = () => abrirFoto(index, { tipo: "pessoal" });
     gridPessoal.appendChild(div);
   });
 }
