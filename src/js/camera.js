@@ -520,7 +520,20 @@ if (cameraAtiva) {
         { label: "🇺🇸 Inglês", value: "inglês" },
         { label: "🇪🇸 Espanhol", value: "espanhol" },
         { label: "🇫🇷 Francês", value: "francês" },
+        { label: "🇩🇪 Alemão", value: "alemão" },
+        { label: "🇮🇹 Italiano", value: "italiano" },
       ];
+
+      const confirmarIdioma = (idioma) => {
+        if (!idioma) return;
+        seletor.remove();
+        const btnCaptura = document.getElementById("btn-captura");
+        btnCaptura.style.borderColor = "var(--cor-amarelo)";
+        btnCaptura.onclick = () => {
+          btnCaptura.onclick = null;
+          capturarETradzuir(video, wrapper, idioma);
+        };
+      };
 
       idiomas.forEach(idioma => {
         const btnIdioma = document.createElement("button");
@@ -535,17 +548,52 @@ if (cameraAtiva) {
           cursor: pointer;
           text-align: left;
         `;
-        btnIdioma.onclick = () => {
-          seletor.remove();
-          const btnCaptura = document.getElementById("btn-captura");
-          btnCaptura.style.borderColor = "var(--cor-amarelo)";
-          btnCaptura.onclick = () => {
-            btnCaptura.onclick = null;
-            capturarETradzuir(video, wrapper, idioma.value);
-          };
-        };
+        btnIdioma.onclick = () => confirmarIdioma(idioma.value);
         seletor.appendChild(btnIdioma);
       });
+
+      const inputOutro = document.createElement("input");
+      inputOutro.type = "text";
+      inputOutro.placeholder = "Outro idioma...";
+      inputOutro.style.cssText = `
+        background: rgba(255, 255, 255, 0.1);
+        color: #FFF;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size: 13px;
+        outline: none;
+      `;
+      seletor.appendChild(inputOutro);
+
+      const btnConfirmarOutro = document.createElement("button");
+      btnConfirmarOutro.textContent = "Traduzir";
+      btnConfirmarOutro.style.cssText = `
+        background: var(--cor-amarelo);
+        color: #000;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      `;
+      btnConfirmarOutro.onclick = () => confirmarIdioma(inputOutro.value.trim());
+      seletor.appendChild(btnConfirmarOutro);
+
+      const btnCancelar = document.createElement("button");
+      btnCancelar.textContent = "Cancelar";
+      btnCancelar.style.cssText = `
+        background: transparent;
+        color: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size: 13px;
+        cursor: pointer;
+      `;
+      btnCancelar.onclick = () => seletor.remove();
+      seletor.appendChild(btnCancelar);
 
       wrapper.appendChild(seletor);
     }
