@@ -496,6 +496,7 @@ async function capturarEDigitalizar(video, wrapper) {
   canvasCaptura.width = video.videoWidth || wrapper.offsetWidth;
   canvasCaptura.height = video.videoHeight || wrapper.offsetHeight;
   const ctxCaptura = canvasCaptura.getContext("2d");
+  ctxCaptura.filter = "contrast(1.8) brightness(1.15) saturate(0.3)";
   ctxCaptura.drawImage(video, 0, 0, canvasCaptura.width, canvasCaptura.height);
   const imagemCapturada = canvasCaptura.toDataURL("image/png");
 
@@ -521,7 +522,6 @@ async function capturarEDigitalizar(video, wrapper) {
     width: 100%; height: 100%;
     object-fit: contain;
     z-index: 4;
-    filter: contrast(1.8) brightness(1.15) saturate(0.3);
   `;
   wrapper.appendChild(img);
 
