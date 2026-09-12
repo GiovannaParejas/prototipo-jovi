@@ -211,6 +211,16 @@ body {
   font-weight: 600;
 }
 
+.modo:disabled {
+  color: var(--cor-texto-muted);
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.oculto {
+  display: none !important;
+}
+
 .controles {
   display: flex;
   justify-content: space-between;

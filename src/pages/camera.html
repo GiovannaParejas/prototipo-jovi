@@ -83,11 +83,15 @@
       </div>
 
       <div class="modos-camera">
-        <button class="modo">Retrato</button>
-        <button class="modo">Foto</button>
-        <button class="modo ativo">Estudo</button>
-        <button class="modo">Vídeo</button>
-        <button class="modo">Mais</button>
+        <button class="modo" disabled>Retrato</button>
+        <button class="modo" onclick="selecionarModoCamera('foto', this)">
+          Foto
+        </button>
+        <button class="modo ativo" onclick="selecionarModoCamera('estudo', this)">
+          Estudo
+        </button>
+        <button class="modo" disabled>Vídeo</button>
+        <button class="modo" disabled>Mais</button>
       </div>
 
       <div class="controles">

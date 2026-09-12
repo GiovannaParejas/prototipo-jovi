@@ -42,6 +42,7 @@ async function iniciarCamera() {
 }
 
 iniciarCamera();
+armarCapturaPessoal();
 
 document.querySelector(".btn-flip").onclick = async () => {
   if (!cameraAtiva) return;
@@ -61,14 +62,28 @@ document.querySelector(".btn-flip").onclick = async () => {
   }
 };
 
-document.querySelectorAll(".modo").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    document
-      .querySelectorAll(".modo")
-      .forEach((b) => b.classList.remove("ativo"));
-    btn.classList.add("ativo");
-  });
-});
+let modoCameraAtivo = "estudo";
+
+function selecionarModoCamera(modo, el) {
+  document.querySelectorAll(".modo").forEach((b) => b.classList.remove("ativo"));
+  el.classList.add("ativo");
+  modoCameraAtivo = modo;
+
+  voltarParaLoop();
+  document.getElementById("modos-acao").classList.toggle("oculto", modo !== "estudo");
+
+  armarCapturaPessoal();
+}
+
+function armarCapturaPessoal() {
+  const btnCaptura = document.getElementById("btn-captura");
+  btnCaptura.onclick = () => {
+    capturarFotoPessoal(
+      document.getElementById("camera-feed"),
+      document.querySelector(".camera-wrapper"),
+    );
+  };
+}
 
 document.querySelectorAll(".zoom-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -354,6 +369,96 @@ function capturarETradzuir(video, wrapper, idioma = "português") {
           msg.textContent = "Erro ao traduzir.";
           setTimeout(() => msg.remove(), 2000);
         });
+    });
+  });
+}
+
+function capturarFotoPessoal(video, wrapper) {
+  const msg = document.createElement("div");
+  msg.id = "msg-reconhecimento";
+  msg.textContent = "Capturando...";
+  wrapper.appendChild(msg);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const canvasCaptura = document.createElement("canvas");
+      canvasCaptura.width = video.videoWidth || wrapper.offsetWidth;
+      canvasCaptura.height = video.videoHeight || wrapper.offsetHeight;
+      const ctxCaptura = canvasCaptura.getContext("2d");
+      ctxCaptura.drawImage(video, 0, 0, canvasCaptura.width, canvasCaptura.height);
+      const imagemCapturada = canvasCaptura.toDataURL("image/png");
+
+      const pixelData = ctxCaptura.getImageData(0, 0, 100, 100).data;
+      const somaPixels = pixelData.reduce((acc, v) => acc + v, 0);
+      const imagemVazia = somaPixels < 100;
+
+      if (imagemVazia) {
+        msg.textContent = "Erro ao capturar. Tente novamente.";
+        setTimeout(() => msg.remove(), 2000);
+        return;
+      }
+
+      msg.remove();
+      video.style.display = "none";
+
+      const img = document.createElement("img");
+      img.id = "resultado-copia";
+      img.src = imagemCapturada;
+      img.style.cssText = `
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        object-fit: contain;
+        z-index: 4;
+      `;
+      wrapper.appendChild(img);
+
+      const btnFechar = document.createElement("button");
+      btnFechar.id = "btn-fechar-selecao";
+      btnFechar.innerHTML = '<span class="material-icons">close</span>';
+      btnFechar.onclick = voltarParaLoop;
+      wrapper.appendChild(btnFechar);
+
+      const botoes = document.createElement("div");
+      botoes.id = "botoes-copia";
+      botoes.style.cssText = `
+        position: absolute;
+        bottom: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 9;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+      `;
+
+      const btnSalvar = document.createElement("button");
+      btnSalvar.textContent = "Salvar";
+      btnSalvar.style.cssText = `
+        background: rgba(255, 247, 0, 0.9);
+        color: #000;
+        border: none;
+        border-radius: 20px;
+        padding: 10px 28px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      `;
+      btnSalvar.onclick = () => {
+        const fotos = JSON.parse(localStorage.getItem("fotos_extras") || "[]");
+        fotos.push({
+          src: imagemCapturada,
+          titulo: `Foto ${new Date().toLocaleDateString("pt-BR")}`,
+          nota: null,
+          tipo: "pessoal",
+        });
+        localStorage.setItem("fotos_extras", JSON.stringify(fotos));
+        mostrarAviso("Foto salva na galeria!");
+        setTimeout(() => (window.location.href = "./galeria.html"), 1500);
+      };
+
+      botoes.appendChild(btnSalvar);
+      wrapper.appendChild(botoes);
     });
   });
 }
