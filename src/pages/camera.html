@@ -60,7 +60,7 @@
           </button>
         </div>
 
-        <div class="modos-acao" id="modos-acao">
+        <div class="modos-acao oculto" id="modos-acao">
           <button
             class="modo-acao"
             onclick="selecionarAcao('digitalizar', this)"
@@ -84,10 +84,10 @@
 
       <div class="modos-camera">
         <button class="modo" disabled>Retrato</button>
-        <button class="modo" onclick="selecionarModoCamera('foto', this)">
+        <button class="modo ativo" onclick="selecionarModoCamera('foto', this)">
           Foto
         </button>
-        <button class="modo ativo" onclick="selecionarModoCamera('estudo', this)">
+        <button class="modo" onclick="selecionarModoCamera('estudo', this)">
           Estudo
         </button>
         <button class="modo" disabled>Vídeo</button>

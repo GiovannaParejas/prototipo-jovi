@@ -41,7 +41,7 @@ async function iniciarCamera() {
   }
 }
 
-iniciarCamera();
+iniciarCamera().then(() => iniciarDeteccaoEstudo());
 armarCapturaPessoal();
 
 document.querySelector(".btn-flip").onclick = async () => {
@@ -62,17 +62,57 @@ document.querySelector(".btn-flip").onclick = async () => {
   }
 };
 
-let modoCameraAtivo = "estudo";
+let modoCameraAtivo = "foto";
+let intervaloDeteccaoEstudo = null;
 
 function selecionarModoCamera(modo, el) {
   document.querySelectorAll(".modo").forEach((b) => b.classList.remove("ativo"));
   el.classList.add("ativo");
   modoCameraAtivo = modo;
 
+  pararDeteccaoEstudo();
   voltarParaLoop();
   document.getElementById("modos-acao").classList.toggle("oculto", modo !== "estudo");
 
   armarCapturaPessoal();
+  iniciarDeteccaoEstudo();
+}
+
+function iniciarDeteccaoEstudo() {
+  if (intervaloDeteccaoEstudo || modoCameraAtivo !== "foto" || !cameraAtiva) return;
+  intervaloDeteccaoEstudo = setInterval(detectarConteudoDeEstudo, 4000);
+}
+
+function pararDeteccaoEstudo() {
+  if (intervaloDeteccaoEstudo) {
+    clearInterval(intervaloDeteccaoEstudo);
+    intervaloDeteccaoEstudo = null;
+  }
+}
+
+async function detectarConteudoDeEstudo() {
+  const video = document.getElementById("camera-feed");
+  if (!cameraAtiva || modoCameraAtivo !== "foto" || !video.videoWidth) return;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 320;
+  canvas.height = Math.round((video.videoHeight / video.videoWidth) * 320) || 240;
+  canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+  const imagemBase64 = canvas.toDataURL("image/jpeg", 0.6).split(",")[1];
+
+  try {
+    const resposta = await reconhecerComGemini(imagemBase64, "detectar_estudo");
+    if (modoCameraAtivo !== "foto") return; // modo mudou enquanto a IA respondia
+
+    if (/^sim/i.test(resposta.trim())) {
+      pararDeteccaoEstudo();
+      const btnEstudo = document.querySelector('.modo[onclick*="\'estudo\'"]');
+      if (btnEstudo) selecionarModoCamera("estudo", btnEstudo);
+      mostrarAviso("Modo estudo reconhecido!");
+    }
+  } catch (err) {
+    console.error("Erro na detecção automática de modo estudo:", err);
+  }
 }
 
 function armarCapturaPessoal() {
@@ -391,6 +431,8 @@ function aguardarVideoComFrame(video, tentativas = 15, intervaloMs = 150) {
 }
 
 async function capturarFotoPessoal(video, wrapper) {
+  pararDeteccaoEstudo();
+
   const msg = document.createElement("div");
   msg.id = "msg-reconhecimento";
   msg.textContent = "Capturando...";
@@ -415,6 +457,7 @@ async function capturarFotoPessoal(video, wrapper) {
   if (imagemVazia) {
     msg.textContent = "Câmera indisponível. Tente novamente.";
     setTimeout(() => msg.remove(), 2000);
+    iniciarDeteccaoEstudo();
     return;
   }
 
@@ -436,7 +479,10 @@ async function capturarFotoPessoal(video, wrapper) {
   const btnFechar = document.createElement("button");
   btnFechar.id = "btn-fechar-selecao";
   btnFechar.innerHTML = '<span class="material-icons">close</span>';
-  btnFechar.onclick = voltarParaLoop;
+  btnFechar.onclick = () => {
+    voltarParaLoop();
+    iniciarDeteccaoEstudo();
+  };
   wrapper.appendChild(btnFechar);
 
   const botoes = document.createElement("div");
