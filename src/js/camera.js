@@ -384,94 +384,95 @@ function capturarETradzuir(video, wrapper, idioma = "português") {
   });
 }
 
-function capturarFotoPessoal(video, wrapper) {
+async function capturarFotoPessoal(video, wrapper) {
   const msg = document.createElement("div");
   msg.id = "msg-reconhecimento";
   msg.textContent = "Capturando...";
   wrapper.appendChild(msg);
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      const canvasCaptura = document.createElement("canvas");
-      canvasCaptura.width = video.videoWidth || wrapper.offsetWidth;
-      canvasCaptura.height = video.videoHeight || wrapper.offsetHeight;
-      const ctxCaptura = canvasCaptura.getContext("2d");
-      ctxCaptura.drawImage(video, 0, 0, canvasCaptura.width, canvasCaptura.height);
-      const imagemCapturada = canvasCaptura.toDataURL("image/png");
+  await aguardarVideoComFrame(video);
+  await new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve)),
+  );
 
-      const pixelData = ctxCaptura.getImageData(0, 0, 100, 100).data;
-      const somaPixels = pixelData.reduce((acc, v) => acc + v, 0);
-      const imagemVazia = somaPixels < 100;
+  const canvasCaptura = document.createElement("canvas");
+  canvasCaptura.width = video.videoWidth || wrapper.offsetWidth;
+  canvasCaptura.height = video.videoHeight || wrapper.offsetHeight;
+  const ctxCaptura = canvasCaptura.getContext("2d");
+  ctxCaptura.drawImage(video, 0, 0, canvasCaptura.width, canvasCaptura.height);
+  const imagemCapturada = canvasCaptura.toDataURL("image/png");
 
-      if (imagemVazia) {
-        msg.textContent = "Erro ao capturar. Tente novamente.";
-        setTimeout(() => msg.remove(), 2000);
-        return;
-      }
+  const pixelData = ctxCaptura.getImageData(0, 0, 100, 100).data;
+  const somaPixels = pixelData.reduce((acc, v) => acc + v, 0);
+  const imagemVazia = somaPixels < 100;
 
-      msg.remove();
-      video.style.display = "none";
+  if (imagemVazia) {
+    msg.textContent = "Câmera indisponível. Tente novamente.";
+    setTimeout(() => msg.remove(), 2000);
+    return;
+  }
 
-      const img = document.createElement("img");
-      img.id = "resultado-copia";
-      img.src = imagemCapturada;
-      img.style.cssText = `
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        object-fit: contain;
-        z-index: 4;
-      `;
-      wrapper.appendChild(img);
+  msg.remove();
+  video.style.display = "none";
 
-      const btnFechar = document.createElement("button");
-      btnFechar.id = "btn-fechar-selecao";
-      btnFechar.innerHTML = '<span class="material-icons">close</span>';
-      btnFechar.onclick = voltarParaLoop;
-      wrapper.appendChild(btnFechar);
+  const img = document.createElement("img");
+  img.id = "resultado-copia";
+  img.src = imagemCapturada;
+  img.style.cssText = `
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    z-index: 4;
+  `;
+  wrapper.appendChild(img);
 
-      const botoes = document.createElement("div");
-      botoes.id = "botoes-copia";
-      botoes.style.cssText = `
-        position: absolute;
-        bottom: 50px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 9;
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-      `;
+  const btnFechar = document.createElement("button");
+  btnFechar.id = "btn-fechar-selecao";
+  btnFechar.innerHTML = '<span class="material-icons">close</span>';
+  btnFechar.onclick = voltarParaLoop;
+  wrapper.appendChild(btnFechar);
 
-      const btnSalvar = document.createElement("button");
-      btnSalvar.textContent = "Salvar";
-      btnSalvar.style.cssText = `
-        background: rgba(255, 247, 0, 0.9);
-        color: #000;
-        border: none;
-        border-radius: 20px;
-        padding: 10px 28px;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-      `;
-      btnSalvar.onclick = () => {
-        const fotos = JSON.parse(localStorage.getItem("fotos_extras") || "[]");
-        fotos.push({
-          src: imagemCapturada,
-          titulo: `Foto ${new Date().toLocaleDateString("pt-BR")}`,
-          nota: null,
-          tipo: "pessoal",
-        });
-        localStorage.setItem("fotos_extras", JSON.stringify(fotos));
-        mostrarAviso("Foto salva na galeria!");
-        setTimeout(() => (window.location.href = "./galeria.html"), 1500);
-      };
+  const botoes = document.createElement("div");
+  botoes.id = "botoes-copia";
+  botoes.style.cssText = `
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  `;
 
-      botoes.appendChild(btnSalvar);
-      wrapper.appendChild(botoes);
+  const btnSalvar = document.createElement("button");
+  btnSalvar.textContent = "Salvar";
+  btnSalvar.style.cssText = `
+    background: rgba(255, 247, 0, 0.9);
+    color: #000;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 28px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  `;
+  btnSalvar.onclick = () => {
+    const fotos = JSON.parse(localStorage.getItem("fotos_extras") || "[]");
+    fotos.push({
+      src: imagemCapturada,
+      titulo: `Foto ${new Date().toLocaleDateString("pt-BR")}`,
+      nota: null,
+      tipo: "pessoal",
     });
-  });
+    localStorage.setItem("fotos_extras", JSON.stringify(fotos));
+    mostrarAviso("Foto salva na galeria!");
+    setTimeout(() => (window.location.href = "./galeria.html"), 1500);
+  };
+
+  botoes.appendChild(btnSalvar);
+  wrapper.appendChild(botoes);
 }
 
 function aguardarOpenCvPronto(timeoutMs = 8000) {
@@ -503,12 +504,66 @@ function aplicarRealceDeDigitalizacao(canvasOrigem) {
   return canvasRealcado;
 }
 
+function distanciaEntrePontos(a, b) {
+  return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+}
+
+function detectarDocumento(canvasCaptura) {
+  const img = cv.imread(canvasCaptura);
+  try {
+    const contorno = scannerDocumento.findPaperContour(img);
+    if (!contorno) return null;
+
+    const corners = scannerDocumento.getCornerPoints(contorno);
+    const { topLeftCorner, topRightCorner, bottomLeftCorner, bottomRightCorner } = corners;
+    if (!topLeftCorner || !topRightCorner || !bottomLeftCorner || !bottomRightCorner) {
+      return null;
+    }
+
+    // usa as proporções reais do documento detectado, em vez de um tamanho fixo,
+    // para evitar distorcer o resultado ao forçar um formato de página arbitrário
+    const largura = Math.round(
+      (distanciaEntrePontos(topLeftCorner, topRightCorner) +
+        distanciaEntrePontos(bottomLeftCorner, bottomRightCorner)) /
+        2,
+    );
+    const altura = Math.round(
+      (distanciaEntrePontos(topLeftCorner, bottomLeftCorner) +
+        distanciaEntrePontos(topRightCorner, bottomRightCorner)) /
+        2,
+    );
+    if (largura < 1 || altura < 1) return null;
+
+    return scannerDocumento.extractPaper(canvasCaptura, largura, altura, corners);
+  } finally {
+    img.delete();
+  }
+}
+
+function aguardarVideoComFrame(video, tentativas = 15, intervaloMs = 150) {
+  return new Promise((resolve) => {
+    const verificar = (restantes) => {
+      if (video.videoWidth > 0 && video.videoHeight > 0 && video.readyState >= 2) {
+        resolve(true);
+        return;
+      }
+      if (restantes <= 0) {
+        resolve(false);
+        return;
+      }
+      setTimeout(() => verificar(restantes - 1), intervaloMs);
+    };
+    verificar(tentativas);
+  });
+}
+
 async function capturarEDigitalizar(video, wrapper) {
   const msg = document.createElement("div");
   msg.id = "msg-reconhecimento";
   msg.textContent = "Digitalizando...";
   wrapper.appendChild(msg);
 
+  await aguardarVideoComFrame(video);
   await new Promise((resolve) =>
     requestAnimationFrame(() => requestAnimationFrame(resolve)),
   );
@@ -535,11 +590,7 @@ async function capturarEDigitalizar(video, wrapper) {
   let canvasDocumento = canvasCaptura;
   if (opencvOk) {
     try {
-      const canvasDetectado = scannerDocumento.extractPaper(
-        canvasCaptura,
-        800,
-        1131,
-      );
+      const canvasDetectado = detectarDocumento(canvasCaptura);
       if (canvasDetectado) canvasDocumento = canvasDetectado;
     } catch (err) {
       console.error("Erro ao detectar documento na foto:", err);
