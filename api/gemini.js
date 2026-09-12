@@ -13,6 +13,8 @@ const prompt = modo === 'traduzir'
   ? `Extraia e traduza para ${idioma} todo o texto visível nesta imagem. Retorne apenas o texto traduzido, sem explicações.`
   : modo === 'materia'
   ? 'Analise o conteúdo desta imagem e identifique a matéria ou categoria de estudo mais adequada para organizá-la (ex: Matemática, História, Biologia, Inglês, Português, Química, Física, Geografia, Design, Programação). Responda apenas com o nome da matéria, em uma ou duas palavras, sem explicações nem pontuação.'
+  : modo === 'detectar_estudo'
+  ? 'Analise esta imagem e responda apenas "sim" se ela mostrar material de estudo, como um caderno, livro, apostila, folha com texto manuscrito ou impresso, ou documento — ou "não" caso contrário (ex: rosto, ambiente, objeto qualquer sem texto). Responda com uma única palavra: sim ou não.'
   : 'Extraia todo o texto visível nesta imagem. Retorne apenas o texto puro, sem formatação, sem JSON, sem explicações.';
 
   const response = await fetch(
