@@ -4,6 +4,17 @@ let cameraAtiva = false;
 let facingMode = "environment";
 let modoAtual = null;
 
+// --- Digitalização real de documento (jscanify + OpenCV.js) ---
+let openCvPronto = false;
+const scannerDocumento = typeof jscanify !== "undefined" ? new jscanify() : null;
+
+function onOpenCvCarregado() {
+  if (typeof cv === "undefined") return;
+  cv["onRuntimeInitialized"] = () => {
+    openCvPronto = true;
+  };
+}
+
 async function reconhecerComGemini(imagemBase64, modo = "copiar", idioma = "português") {
   const response = await fetch("https://prototipo-jovi.vercel.app/api/gemini", {
     method: "POST",
@@ -463,100 +474,146 @@ function capturarFotoPessoal(video, wrapper) {
   });
 }
 
-function capturarEDigitalizar(video, wrapper) {
+function aguardarOpenCvPronto(timeoutMs = 8000) {
+  return new Promise((resolve) => {
+    if (openCvPronto && scannerDocumento) {
+      resolve(true);
+      return;
+    }
+    const inicio = Date.now();
+    const verificar = setInterval(() => {
+      if (openCvPronto && scannerDocumento) {
+        clearInterval(verificar);
+        resolve(true);
+      } else if (Date.now() - inicio > timeoutMs) {
+        clearInterval(verificar);
+        resolve(false);
+      }
+    }, 200);
+  });
+}
+
+function aplicarRealceDeDigitalizacao(canvasOrigem) {
+  const canvasRealcado = document.createElement("canvas");
+  canvasRealcado.width = canvasOrigem.width;
+  canvasRealcado.height = canvasOrigem.height;
+  const ctx = canvasRealcado.getContext("2d");
+  ctx.filter = "contrast(1.5) brightness(1.1) saturate(0.4)";
+  ctx.drawImage(canvasOrigem, 0, 0);
+  return canvasRealcado;
+}
+
+async function capturarEDigitalizar(video, wrapper) {
   const msg = document.createElement("div");
   msg.id = "msg-reconhecimento";
   msg.textContent = "Digitalizando...";
   wrapper.appendChild(msg);
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      const canvasCaptura = document.createElement("canvas");
-      canvasCaptura.width = video.videoWidth || wrapper.offsetWidth;
-      canvasCaptura.height = video.videoHeight || wrapper.offsetHeight;
-      const ctxCaptura = canvasCaptura.getContext("2d");
-      ctxCaptura.drawImage(video, 0, 0, canvasCaptura.width, canvasCaptura.height);
-      const imagemCapturada = canvasCaptura.toDataURL("image/png");
+  await new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve)),
+  );
 
-      const pixelData = ctxCaptura.getImageData(0, 0, 100, 100).data;
-      const somaPixels = pixelData.reduce((acc, v) => acc + v, 0);
-      const imagemVazia = somaPixels < 100;
+  const canvasCaptura = document.createElement("canvas");
+  canvasCaptura.width = video.videoWidth || wrapper.offsetWidth;
+  canvasCaptura.height = video.videoHeight || wrapper.offsetHeight;
+  const ctxCaptura = canvasCaptura.getContext("2d");
+  ctxCaptura.drawImage(video, 0, 0, canvasCaptura.width, canvasCaptura.height);
 
-      if (imagemVazia) {
-        msg.textContent = "Erro ao capturar. Tente novamente.";
-        setTimeout(() => msg.remove(), 2000);
-        return;
-      }
+  const pixelData = ctxCaptura.getImageData(0, 0, 100, 100).data;
+  const somaPixels = pixelData.reduce((acc, v) => acc + v, 0);
+  const imagemVazia = somaPixels < 100;
 
-      msg.textContent = "Processando...";
-      video.style.display = "none";
+  if (imagemVazia) {
+    msg.textContent = "Erro ao capturar. Tente novamente.";
+    setTimeout(() => msg.remove(), 2000);
+    return;
+  }
 
-      const img = document.createElement("img");
-      img.id = "resultado-copia";
-      img.src = imagemCapturada;
-img.style.cssText = `
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  object-fit: contain;
-  z-index: 4;
-  filter: contrast(1.8) brightness(1.15) saturate(0.3);
-`;
-      wrapper.appendChild(img);
+  msg.textContent = "Preparando digitalização...";
+  const opencvOk = await aguardarOpenCvPronto();
 
-      const btnFechar = document.createElement("button");
-      btnFechar.id = "btn-fechar-selecao";
-      btnFechar.innerHTML = '<span class="material-icons">close</span>';
-      btnFechar.onclick = voltarParaLoop;
-      wrapper.appendChild(btnFechar);
+  let canvasDocumento = canvasCaptura;
+  if (opencvOk) {
+    try {
+      const canvasDetectado = scannerDocumento.extractPaper(
+        canvasCaptura,
+        800,
+        1131,
+      );
+      if (canvasDetectado) canvasDocumento = canvasDetectado;
+    } catch (err) {
+      console.error("Erro ao detectar documento na foto:", err);
+    }
+  }
 
-      setTimeout(() => {
-        msg.remove();
+  const canvasFinal = aplicarRealceDeDigitalizacao(canvasDocumento);
+  const imagemCapturada = canvasFinal.toDataURL("image/png");
 
-        const botoes = document.createElement("div");
-        botoes.id = "botoes-copia";
-        botoes.style.cssText = `
-          position: absolute;
-          bottom: 50px;
-          left: 50%;
-          transform: translateX(-50%);
-          z-index: 9;
-          display: flex;
-          gap: 10px;
-          justify-content: center;
-        `;
+  msg.textContent = "Processando...";
+  video.style.display = "none";
 
-        const btnSalvar = document.createElement("button");
-        btnSalvar.textContent = "Salvar";
-        btnSalvar.style.cssText = `
-          background: rgba(255, 247, 0, 0.9);
-          color: #000;
-          border: none;
-          border-radius: 20px;
-          padding: 10px 28px;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
-        `;
-btnSalvar.onclick = () => {
-  const fotos = JSON.parse(localStorage.getItem('fotos_extras') || '[]');
-  fotos.push({
-    src: imagemCapturada,
-    titulo: `Digitalização ${new Date().toLocaleDateString('pt-BR')}`,
-    nota: null,
-    tipo: 'estudo'
-  });
-  localStorage.setItem('fotos_extras', JSON.stringify(fotos));
-  console.log('Fotos salvas:', localStorage.getItem('fotos_extras'));
-  mostrarAviso("Imagem salva na galeria!");
-  setTimeout(() => window.location.href = "./galeria.html", 1500);
-};
+  const img = document.createElement("img");
+  img.id = "resultado-copia";
+  img.src = imagemCapturada;
+  img.style.cssText = `
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    z-index: 4;
+  `;
+  wrapper.appendChild(img);
 
-        botoes.appendChild(btnSalvar);
-        wrapper.appendChild(botoes);
-      }, 800);
-    });
-  });
+  const btnFechar = document.createElement("button");
+  btnFechar.id = "btn-fechar-selecao";
+  btnFechar.innerHTML = '<span class="material-icons">close</span>';
+  btnFechar.onclick = voltarParaLoop;
+  wrapper.appendChild(btnFechar);
+
+  setTimeout(() => {
+    msg.remove();
+
+    const botoes = document.createElement("div");
+    botoes.id = "botoes-copia";
+    botoes.style.cssText = `
+      position: absolute;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    `;
+
+    const btnSalvar = document.createElement("button");
+    btnSalvar.textContent = "Salvar";
+    btnSalvar.style.cssText = `
+      background: rgba(255, 247, 0, 0.9);
+      color: #000;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 28px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    `;
+    btnSalvar.onclick = () => {
+      const fotos = JSON.parse(localStorage.getItem('fotos_extras') || '[]');
+      fotos.push({
+        src: imagemCapturada,
+        titulo: `Digitalização ${new Date().toLocaleDateString('pt-BR')}`,
+        nota: null,
+        tipo: 'estudo'
+      });
+      localStorage.setItem('fotos_extras', JSON.stringify(fotos));
+      mostrarAviso("Imagem salva na galeria!");
+      setTimeout(() => window.location.href = "./galeria.html", 1500);
+    };
+
+    botoes.appendChild(btnSalvar);
+    wrapper.appendChild(botoes);
+  }, 800);
 }
 
 function selecionarAcao(acao, el) {
