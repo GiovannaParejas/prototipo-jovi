@@ -36,11 +36,13 @@ const prompt = modo === 'traduzir'
   const data = await response.json();
 
   if (data.error) {
+    console.error('Erro da API Gemini:', response.status, JSON.stringify(data.error));
     return res.status(500).json({ erro: data.error.message });
   }
 
   const texto = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!texto) {
+    console.error('Gemini sem candidates/texto:', JSON.stringify(data));
     return res.status(500).json({ erro: 'A IA não retornou texto para essa imagem.' });
   }
 
