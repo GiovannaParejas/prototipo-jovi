@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-const { imageBase64, modo, idioma = 'português' } = req.body;
+const { imageBase64, modo, idioma = 'português', mimeType = 'image/png' } = req.body;
 
 const prompt = modo === 'traduzir'
   ? `Extraia e traduza para ${idioma} todo o texto visível nesta imagem. Retorne apenas o texto traduzido, sem explicações.`
@@ -25,7 +25,7 @@ const prompt = modo === 'traduzir'
       body: JSON.stringify({
         contents: [{
           parts: [
-            { inline_data: { mime_type: 'image/png', data: imageBase64 } },
+            { inline_data: { mime_type: mimeType, data: imageBase64 } },
             { text: prompt }
           ]
         }]
@@ -39,5 +39,10 @@ const prompt = modo === 'traduzir'
     return res.status(500).json({ erro: data.error.message });
   }
 
-  res.json({ texto: data.candidates[0].content.parts[0].text.trim() });
+  const texto = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!texto) {
+    return res.status(500).json({ erro: 'A IA não retornou texto para essa imagem.' });
+  }
+
+  res.json({ texto: texto.trim() });
 }
